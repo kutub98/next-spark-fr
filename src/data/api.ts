@@ -1,1 +1,1 @@
-export const api = "https://next-spark-fr.vercel.app";
+export const api = "https://next-spark-backend.vercel.app/";
