@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "keen-slider/keen-slider.min.css";
-// import { api } from "@/data/api";
+import { api } from "@/data/api";
 
 type BannerItem = {
   _id: string;
@@ -44,11 +44,8 @@ export default function Banner() {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        // const res = await fetch(`${api}/banner`);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/banner`);
+        const res = await fetch(`${api}/banner`);
         const json = await res.json();
-
-        console.log(json, "Banner API Response");
         if (json.success && Array.isArray(json.data)) {
           const approvedBanners = json.data.filter(
             (item: BannerItem) => item.status === "approved"
@@ -90,7 +87,6 @@ export default function Banner() {
 
   if (banners.length === 0) return null; // You can replace with loader if needed
 
-  console.log("Banners:", banners);
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
