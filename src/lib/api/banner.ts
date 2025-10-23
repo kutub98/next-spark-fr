@@ -13,9 +13,17 @@ export const bannerSchema = z.object({
 export type BannerPayload = z.infer<typeof bannerSchema>;
 
 export const createBanner = async (data: BannerPayload) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No token found. Please log in first.");
+  }
   const res = await fetch(`${api}/banner`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+
     body: JSON.stringify([data]),
   });
 
@@ -29,9 +37,16 @@ export const createBanner = async (data: BannerPayload) => {
 };
 
 export const updateBanner = async (id: string, data: BannerPayload) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No token found. Please log in first.");
+  }
   const res = await fetch(`${api}/banner/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to update banner");
@@ -39,8 +54,15 @@ export const updateBanner = async (id: string, data: BannerPayload) => {
 };
 
 export const deleteBanner = async (id: string) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("No token found. Please log in first.");
+  }
   const res = await fetch(`${api}/banner/${id}`, {
     method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
   if (!res.ok) throw new Error("Failed to delete banner");
   return res.json();

@@ -42,6 +42,7 @@ export default function UpdateBannerDialog({
   const onSubmit = async (data: BannerPayload) => {
     try {
       await updateBanner(banner._id, data);
+      console.log(updateBanner, 'updateBanner');
       toast.success("Banner updated successfully!");
       await onChange();
       setOpen(false);

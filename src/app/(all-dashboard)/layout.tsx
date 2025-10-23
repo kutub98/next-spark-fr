@@ -301,10 +301,16 @@ function SidebarContent({
       <div className="flex items-center justify-between px-4 border-b border-gray-700">
         <Link
           href="/"
-          className="flex bg-white w-full items-center gap-2 py-2 rounded-lg shadow-sm"
+          className="flex w-full items-center gap-2 py-2 rounded-lg shadow-sm"
         >
-          <Image src="/logo.png" alt="Logo" width={40} height={40} />
-          <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-[#F06122] via-pink-500 to-gray-800 animate-gradient">
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={40}
+            height={40}
+            className="bg-white border rounded-md p-1 object-contain"
+          />
+          <span className="font-bold text-lg text-white  animate-gradient">
             NEXT SPARK
           </span>
         </Link>

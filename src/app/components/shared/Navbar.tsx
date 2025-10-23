@@ -102,7 +102,7 @@ export default function Navbar() {
               height={40}
               className="object-contain"
             />
-            <span className="font-bold text-lg bg-gradient-to-r from-purple-500 via-pink-500 to-primary bg-clip-text text-transparent animate-gradient">
+            <span className="font-bold text-lg  bg-clip-text text-primary animate-gradient">
               NEXT SPARK
             </span>
           </Link>
@@ -251,7 +251,7 @@ export default function Navbar() {
                   height={40}
                   className="object-contain"
                 />
-                <span className="font-bold text-lg bg-gradient-to-r from-purple-500 via-pink-500 to-primary bg-clip-text text-transparent animate-gradient">
+                <span className="font-bold text-lg  text-primary bg-clip-text animate-gradient">
                   NEXT SPARK
                 </span>
               </Link>

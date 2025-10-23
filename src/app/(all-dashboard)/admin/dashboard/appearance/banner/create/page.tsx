@@ -53,7 +53,7 @@ const BannerForm = () => {
       if (response.success) {
         toast.success(response.message || "Banner created");
         form.reset();
-        router.push("/dashboard/appearance/banner");
+        router.push("/admin/dashboard/appearance/banner");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -145,7 +145,6 @@ const BannerForm = () => {
                     <FormControl>
                       <SelectTrigger className="border border-gray-300 rounded-lg px-4 py-3 focus:border-orange-500 focus:ring-2 focus:ring-orange-300 transition">
                         <SelectValue placeholder="Select status" />{" "}
-
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="z-50 bg-white border border-gray-200 rounded-md shadow-md">
