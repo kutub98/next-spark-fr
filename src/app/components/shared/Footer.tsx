@@ -1,10 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Mail, Phone, MapPin, Heart } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function Footer() {
+  // Prevent hydration mismatch — render email field only after client mounts
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+
   return (
     <footer className="border-t border-gray-200 bg-white">
       <div className="container mx-auto px-4 py-12">
@@ -75,26 +82,17 @@ export default function Footer() {
             </h4>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Mail
-                  className="w-4 h-4"
-                  style={{ color: "var(--brand-primary)" }}
-                />
+                <Mail className="w-4 h-4 text-[color:var(--brand-primary)]" />
                 <span className="text-gray-600 text-sm">
                   support@quizcontest.com
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone
-                  className="w-4 h-4"
-                  style={{ color: "var(--brand-primary)" }}
-                />
+                <Phone className="w-4 h-4 text-[color:var(--brand-primary)]" />
                 <span className="text-gray-600 text-sm">+৮৮০ ১৭XX-XXXXXX</span>
               </div>
               <div className="flex items-start gap-2">
-                <MapPin
-                  className="w-4 h-4 mt-1"
-                  style={{ color: "var(--brand-primary)" }}
-                />
+                <MapPin className="w-4 h-4 mt-1 text-[color:var(--brand-primary)]" />
                 <span className="text-gray-600 text-sm">ঢাকা, বাংলাদেশ</span>
               </div>
             </div>
@@ -108,16 +106,18 @@ export default function Footer() {
             <p className="text-gray-600 text-sm mb-3">
               নতুন কুইজ এবং আপডেট সম্পর্কে জানতে সাবস্ক্রাইব করুন
             </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="আপনার ইমেইল"
-                className="flex-1 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 border border-gray-300"
-              />
-              <button className="px-4 py-2 rounded-lg text-sm transition text-white bg-[color:var(--brand-primary)] hover:opacity-90">
-                পাঠান
-              </button>
-            </div>
+            {hydrated && (
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="আপনার ইমেইল"
+                  className="flex-1 text-sm"
+                />
+                <Button className="text-sm bg-[color:var(--brand-primary)] hover:opacity-90">
+                  পাঠান
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

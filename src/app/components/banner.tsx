@@ -44,7 +44,9 @@ export default function Banner() {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const res = await fetch(`${api}/banner`);
+        const res = await fetch(
+          `${api}/banner`
+        );
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
           const approvedBanners = json.data.filter(
