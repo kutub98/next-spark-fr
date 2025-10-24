@@ -112,6 +112,10 @@ const QuizDetailPage = () => {
       console.log("Creating question:", newQuestion);
       await dispatch(createQuestion(newQuestion)).unwrap();
       toast.success("Question created successfully");
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
+
       setNewQuestion({
         quizId: quizId,
         text: "",
@@ -158,7 +162,7 @@ const QuizDetailPage = () => {
     try {
       await dispatch(deleteQuestion(questionId)).unwrap();
       toast.success("Question deleted successfully");
-      // Refresh questions after deletion
+
       dispatch(fetchQuestionsByQuizId(quizId));
     } catch (error) {
       console.error("Delete question error:", error);
@@ -195,6 +199,10 @@ const QuizDetailPage = () => {
         })
       ).unwrap();
       toast.success("Question updated successfully");
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
+
       setEditQuestion(null);
     } catch (error) {
       const errorMessage =
@@ -232,6 +240,10 @@ const QuizDetailPage = () => {
       const questionIds = Array.from(selectedQuestions);
       await dispatch(bulkDeleteQuestions(questionIds)).unwrap();
       toast.success(`${questionIds.length} questions deleted successfully`);
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
+
       setSelectedQuestions(new Set());
       setBulkDeleteMode(false);
     } catch (error) {
@@ -301,6 +313,9 @@ const QuizDetailPage = () => {
 
       await dispatch(importQuestions(questions)).unwrap();
       toast.success(`${questions.length} questions imported successfully`);
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
     } catch (error: unknown) {
       console.error("Import error:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));

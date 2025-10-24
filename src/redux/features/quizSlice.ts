@@ -6,11 +6,14 @@ export interface Quiz {
   _id: string;
   title: string;
   duration: number;
-  totalMarks: number;
+  totalMarks?: number;
   questions: string[];
   isActive: boolean;
-  passingMarks: number;
+  passingMarks?: number;
   instructions?: string;
+  totalQuestions?: number;
+  startTime?: string;
+  endTime?: string;
   eventId:
     | string
     | {
@@ -122,7 +125,12 @@ export const updateQuiz = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.patch(`${api}/quizzes/${id}`, data);
+      const response = await axios.patch(`${api}/quizzes/${id}`, data, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+      });
       return response.data.data;
     } catch (error: unknown) {
       const errorMessage =
@@ -140,7 +148,11 @@ export const deleteQuiz = createAsyncThunk(
   "quizzes/deleteQuiz",
   async (id: string, { rejectWithValue }) => {
     try {
-      await axios.delete(`${api}/quizzes/${id}`);
+      await axios.delete(`${api}/quizzes/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+      });
       return id;
     } catch (error: unknown) {
       const errorMessage =
