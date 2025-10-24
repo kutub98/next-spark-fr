@@ -139,9 +139,9 @@ export default function AuthPage() {
         router.push("/student/dashboard");
       }
     } catch (err: unknown) {
-      // const errorMessage =
-        // err instanceof Error ? err.message;
-      toast.error(err);
+      const errorMessage =
+        err instanceof Error ? err.message : "একটি ত্রুটি ঘটেছে";
+      toast.error(errorMessage);
     }
   };
 

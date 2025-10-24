@@ -156,7 +156,6 @@ const QuizDetailPage = () => {
 
   const handleDeleteQuestion = async (questionId: string) => {
     try {
-      console.log("Deleting question:", questionId);
       await dispatch(deleteQuestion(questionId)).unwrap();
       toast.success("Question deleted successfully");
       // Refresh questions after deletion

@@ -52,13 +52,11 @@ export default function CreateOfferDialog({
   const onSubmit = async (data: OfferFormValues) => {
     try {
       const payload: Offer = {
-        _id: "", 
         img: data.image,
         amount: Number(data.amount),
         dailyGift: Number(data.dailyGift),
         dayLength: Number(data.dayLength),
         status: data.status,
-        __v: 0,
       };
 
       const res = await createOffer(payload);

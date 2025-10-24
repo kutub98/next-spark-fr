@@ -140,7 +140,7 @@ const AdminDashboard = () => {
       });
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to create quiz";
+        error instanceof Error ? error.message : "hello";
       toast.error(errorMessage);
     }
   };

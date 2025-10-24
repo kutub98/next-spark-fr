@@ -83,12 +83,32 @@ export default function FaqForm() {
     try {
       setIsLoading(true);
 
-      if (faqId) {
-        await axios.patch(`${api}/faq/${faqId}`, values);
-        toast.success("FAQ updated");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("No token found. Please log in first.");
+        return;
+      }
+
+      const url = faqId ? `${api}/faq/${faqId}` : `${api}/faq/`;
+      const method = faqId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(values),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        toast.success(faqId ? "FAQ updated" : "FAQ created");
+        if (!faqId) setFaqId(result.data._id); // set new ID after creation
       } else {
-        await axios.post(`${api}/faq/`, values);
-        toast.success("FAQ created");
+        toast.error("Operation failed");
+        console.error(result);
       }
     } catch (err) {
       console.error(err);
@@ -100,9 +120,19 @@ export default function FaqForm() {
 
   const handleDelete = async () => {
     if (!faqId) return;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("No token found. Please log in first.");
+      return;
+    }
     try {
       setIsLoading(true);
-      await axios.delete(`${api}/faq/${faqId}`);
+      await fetch(`${api}/faq/${faqId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       toast.success("FAQ deleted");
       setFaqId(null);
       form.reset(defaultValues);

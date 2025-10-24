@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -70,12 +68,12 @@ export default function QuizDataForm() {
     const fetchData = async () => {
       const res = await fetch(apiUrl);
       const data = await res.json();
-      if (data?.data?.length === 1) {
-        const existing = data.data[0];
 
-        // Convert string[] to { value: string }[] if needed
+      if (data?.data) {
+        // just check if object exists
+        const existing = data.data;
+
         const transformed = {
-          ...existing,
           timeline: {
             ...existing.timeline,
             points: existing.timeline.points.map((p: string) => ({ value: p })),
@@ -112,9 +110,18 @@ export default function QuizDataForm() {
       },
     };
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("No token found. Please log in first.");
+      return;
+    }
+
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(preparedData),
     });
 
@@ -270,7 +277,6 @@ export default function QuizDataForm() {
           )}
         </div>
       </form>
-      
     </FormProvider>
   );
 }

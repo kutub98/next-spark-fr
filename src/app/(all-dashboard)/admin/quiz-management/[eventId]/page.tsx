@@ -43,6 +43,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import axios from "axios";
 
 const EventDetailPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -90,6 +91,8 @@ const EventDetailPage = () => {
       return;
     }
 
+    console.log(newQuiz, "newQuiz");
+
     try {
       setIsCreating(true);
       await dispatch(createQuiz(newQuiz)).unwrap();
@@ -105,8 +108,17 @@ const EventDetailPage = () => {
       });
       setCreateDialogOpen(false);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to create quiz";
+      console.log(error, "error");
+
+      let errorMessage;
+
+      if (axios.isAxiosError(error)) {
+        // Axios error
+        errorMessage = error.response?.data?.message || error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast.error(errorMessage);
     } finally {
       setIsCreating(false);

@@ -247,129 +247,7 @@ export default function ParticipateQuiz({
     }
   }, [dispatch, open, quizId]);
 
-  // Prevent browser navigation (back/forward)
-  useEffect(() => {
-    if (quizStarted && !quizCompleted) {
-      window.history.pushState(null, "", window.location.href);
-      const handlePopState = () => {
-        setViolationMessage(
-          "Navigation (back/forward) is not allowed during the quiz."
-        );
-        setShowConfirmation(true);
-        window.history.pushState(null, "", window.location.href);
-      };
-      window.addEventListener("popstate", handlePopState);
-      return () => {
-        window.removeEventListener("popstate", handlePopState);
-      };
-    }
-  }, [quizStarted, quizCompleted]);
-
-  // Prevent context menu (right-click)
-  useEffect(() => {
-    if (quizStarted && !quizCompleted) {
-      const handleContextMenu = (e: Event) => {
-        e.preventDefault();
-        setViolationMessage("Right-click is disabled during the quiz.");
-        setShowConfirmation(true);
-      };
-      document.addEventListener("contextmenu", handleContextMenu);
-      return () => {
-        document.removeEventListener("contextmenu", handleContextMenu);
-      };
-    }
-  }, [quizStarted, quizCompleted]);
-
-  // Prevent copy, cut, and paste actions
-  useEffect(() => {
-    if (quizStarted && !quizCompleted) {
-      const preventAction = (e: Event) => {
-        e.preventDefault();
-        setViolationMessage(
-          `${
-            e.type.charAt(0).toUpperCase() + e.type.slice(1)
-          } is not allowed during the quiz.`
-        );
-        setShowConfirmation(true);
-      };
-      document.addEventListener("copy", preventAction);
-      document.addEventListener("cut", preventAction);
-      document.addEventListener("paste", preventAction);
-      return () => {
-        document.removeEventListener("copy", preventAction);
-        document.removeEventListener("cut", preventAction);
-        document.removeEventListener("paste", preventAction);
-      };
-    }
-  }, [quizStarted, quizCompleted]);
-
-  // Prevent keyboard shortcuts (Ctrl+T, Ctrl+N, Ctrl+R, etc.)
-  useEffect(() => {
-    if (quizStarted && !quizCompleted) {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        // Detect Ctrl or Cmd key combinations
-        if (e.ctrlKey || e.metaKey) {
-          const key = e.key.toLowerCase();
-          if (["t", "n", "r", "w", "c"].includes(key)) {
-            e.preventDefault();
-            setViolationMessage(
-              `Keyboard shortcut (${
-                e.ctrlKey ? "Ctrl" : "Cmd"
-              }+${key.toUpperCase()}) is not allowed during the quiz.`
-            );
-            setShowConfirmation(true);
-          }
-        }
-      };
-      document.addEventListener("keydown", handleKeyDown);
-      return () => {
-        document.removeEventListener("keydown", handleKeyDown);
-      };
-    }
-  }, [quizStarted, quizCompleted]);
-
-  // Detect tab/window focus changes
-  useEffect(() => {
-    if (quizStarted && !quizCompleted) {
-      const handleVisibilityChange = () => {
-        if (document.hidden) {
-          setViolationMessage(
-            "Switching tabs or minimizing the browser is not allowed."
-          );
-          setShowConfirmation(true);
-        }
-      };
-      const handleBlur = () => {
-        setViolationMessage("Leaving the quiz window is not allowed.");
-        setShowConfirmation(true);
-      };
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-      window.addEventListener("blur", handleBlur);
-      return () => {
-        document.removeEventListener(
-          "visibilitychange",
-          handleVisibilityChange
-        );
-        window.removeEventListener("blur", handleBlur);
-      };
-    }
-  }, [quizStarted, quizCompleted]);
-
-  // Prevent page reload or close
-  useEffect(() => {
-    if (quizStarted && !quizCompleted) {
-      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-        e.preventDefault();
-        setViolationMessage("Reloading or closing the browser is not allowed.");
-        setShowConfirmation(true);
-        e.returnValue = "";
-      };
-      window.addEventListener("beforeunload", handleBeforeUnload);
-      return () => {
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-      };
-    }
-  }, [quizStarted, quizCompleted]);
+  
 
   const calculateScore = useCallback(() => {
     return answers.reduce((total, answer) => total + answer.marksObtained, 0);
@@ -424,6 +302,10 @@ export default function ParticipateQuiz({
             uploads.push(
               fetch(`${api}/participations/${participationId}/submit-answer`, {
                 method: "POST",
+                headers: {
+                'Content-Type': 'multipart/form-data', 
+                Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+                },
                 body: form,
               })
             );

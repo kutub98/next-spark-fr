@@ -38,12 +38,19 @@ const initialState: EventState = {
   error: null,
 };
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 // Create Event Thunk
 export const createEvent = createAsyncThunk(
   "events/createEvent",
   async (eventData: Partial<Event>, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${api}/events`, eventData);
+      const response = await axios.post(`${api}/events`, eventData, {
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      });
       return response.data.data;
     } catch (error: unknown) {
       const errorMessage =
@@ -100,7 +107,9 @@ export const updateEvent = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.patch(`${api}/events/${id}`, data);
+      const response = await axios.patch(`${api}/events/${id}`, data, {
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      });
       return response.data.data;
     } catch (error: unknown) {
       const errorMessage =
@@ -121,10 +130,11 @@ export const addParticipant = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.post(`${api}/events/add-participant`, {
-        eventId,
-        studentId,
-      });
+      const response = await axios.post(
+        `${api}/events/add-participant`,
+        { eventId, studentId },
+        { headers: { ...getAuthHeaders(), "Content-Type": "application/json" } }
+      );
       return response.data.data;
     } catch (error: unknown) {
       const errorMessage =
@@ -160,7 +170,9 @@ export const deleteEvent = createAsyncThunk(
   "events/deleteEvent",
   async (id: string, { rejectWithValue }) => {
     try {
-      await axios.delete(`${api}/events/${id}`);
+      await axios.delete(`${api}/events/${id}`, {
+        headers: { ...getAuthHeaders() },
+      });
       return id;
     } catch (error: unknown) {
       const errorMessage =

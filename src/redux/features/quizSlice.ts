@@ -40,7 +40,12 @@ export const createQuiz = createAsyncThunk(
   "quizzes/createQuiz",
   async (quizData: Partial<Quiz>, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${api}/quizzes`, quizData);
+      const response = await axios.post(`${api}/quizzes`, quizData, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+      });
       return response.data.data;
     } catch (error: unknown) {
       const errorMessage =

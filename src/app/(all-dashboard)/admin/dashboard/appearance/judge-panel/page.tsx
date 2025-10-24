@@ -72,10 +72,17 @@ export default function JudgeForm() {
   const onSubmit = async (formData: JudgeFormValues) => {
     const url = existingId ? `${api}/judge/${existingId}` : `${api}/judge`;
     const method = existingId ? "PATCH" : "POST";
-
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("No token found. Please log in first.");
+      return;
+    }
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(formData),
     });
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // D:\PersonalClientWork\quiz-contest\quiz-contest-fr\src\redux\features\questionSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
@@ -50,6 +51,11 @@ export interface QuestionState {
   error: string | null;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 // Fetch all questions
 export const fetchQuestions = createAsyncThunk<IQuestion[]>(
   "questions/fetchAll",
@@ -72,7 +78,12 @@ export const fetchQuestionsByQuizId = createAsyncThunk<IQuestion[], string>(
 export const createQuestion = createAsyncThunk<IQuestion, Partial<IQuestion>>(
   "questions/create",
   async (questionData) => {
-    const res = await axios.post(`${api}/questions`, questionData);
+    const res = await axios.post(`${api}/questions`, questionData, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
     return res.data.data as IQuestion;
   }
 );
@@ -81,17 +92,28 @@ export const updateQuestion = createAsyncThunk<
   IQuestion,
   { id: string; data: Partial<IQuestion> }
 >("questions/update", async ({ id, data }) => {
-  const res = await axios.put(`${api}/questions/${id}`, data);
+  const res = await axios.put(`${api}/questions/${id}`, data, {
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+  });
   return res.data.data as IQuestion;
 });
 
-export const deleteQuestion = createAsyncThunk<string, string>(
-  "questions/delete",
-  async (id) => {
-    await axios.delete(`${api}/questions/${id}`);
+export const deleteQuestion = createAsyncThunk<
+  string, // return type
+  string, // argument type (question ID)
+  { rejectValue: string } // type for rejectWithValue
+>("questions/delete", async (id, { rejectWithValue }) => {
+  try {
+    await axios.delete(`${api}/questions/${id}`, {
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    });
     return id;
+  } catch (error: any) {
+    const errorMessage =
+      error?.response?.data?.message || "Failed to delete question";
+    return rejectWithValue(errorMessage);
   }
-);
+});
 
 // Bulk delete questions
 export const bulkDeleteQuestions = createAsyncThunk<string[], string[]>(

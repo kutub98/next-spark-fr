@@ -99,7 +99,7 @@ export default function OfferList() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleDelete(banner._id)}
+                    onClick={() => handleDelete(banner?._id ?? "0")}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete

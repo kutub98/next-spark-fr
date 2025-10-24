@@ -54,7 +54,7 @@ export default function UpdateOfferDialog({
         img: data.image,
       };
 
-      const res = await updateOffer(banner._id, payload);
+      const res = await updateOffer(banner?._id ?? "0", payload);
       if (res.success === true) {
         await onChange?.();
         toast.success("Offer updated successfully!");
