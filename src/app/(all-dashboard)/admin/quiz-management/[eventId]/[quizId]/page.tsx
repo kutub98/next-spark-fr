@@ -109,9 +109,13 @@ const QuizDetailPage = () => {
 
     try {
       setIsCreating(true);
-      console.log("Creating question:", newQuestion);
+      // console.log("Creating question:", newQuestion);
       await dispatch(createQuestion(newQuestion)).unwrap();
       toast.success("Question created successfully");
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
+
       setNewQuestion({
         quizId: quizId,
         text: "",
@@ -123,8 +127,8 @@ const QuizDetailPage = () => {
       });
       setCreateDialogOpen(false);
     } catch (error) {
-      console.error("Create question error:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      // console.error("Create question error:", error);
+      // console.error("Error details:", JSON.stringify(error, null, 2));
 
       let errorMessage = "Failed to create question";
 
@@ -158,11 +162,11 @@ const QuizDetailPage = () => {
     try {
       await dispatch(deleteQuestion(questionId)).unwrap();
       toast.success("Question deleted successfully");
-      // Refresh questions after deletion
+
       dispatch(fetchQuestionsByQuizId(quizId));
     } catch (error) {
-      console.error("Delete question error:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      // console.error("Delete question error:", error);
+      // console.error("Error details:", JSON.stringify(error, null, 2));
 
       let errorMessage = "Failed to delete question";
 
@@ -195,6 +199,10 @@ const QuizDetailPage = () => {
         })
       ).unwrap();
       toast.success("Question updated successfully");
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
+
       setEditQuestion(null);
     } catch (error) {
       const errorMessage =
@@ -232,6 +240,10 @@ const QuizDetailPage = () => {
       const questionIds = Array.from(selectedQuestions);
       await dispatch(bulkDeleteQuestions(questionIds)).unwrap();
       toast.success(`${questionIds.length} questions deleted successfully`);
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
+
       setSelectedQuestions(new Set());
       setBulkDeleteMode(false);
     } catch (error) {
@@ -244,11 +256,11 @@ const QuizDetailPage = () => {
   const handleImportQuestions = async (questions: Partial<IQuestion>[]) => {
     try {
       setIsImporting(true);
-      console.log("Importing questions:", questions);
-      console.log(
-        "Questions data structure:",
-        JSON.stringify(questions, null, 2)
-      );
+      // console.log("Importing questions:", questions);
+      // console.log(
+      //   "Questions data structure:",
+      //   JSON.stringify(questions, null, 2)
+      // );
 
       // Validate questions before sending
       const validationErrors: string[] = [];
@@ -301,9 +313,12 @@ const QuizDetailPage = () => {
 
       await dispatch(importQuestions(questions)).unwrap();
       toast.success(`${questions.length} questions imported successfully`);
+
+      // Refresh questions list
+      await dispatch(fetchQuestionsByQuizId(quizId));
     } catch (error: unknown) {
-      console.error("Import error:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      // console.error("Import error:", error);
+      // console.error("Error details:", JSON.stringify(error, null, 2));
 
       let errorMessage = "Failed to import questions";
 
@@ -327,7 +342,7 @@ const QuizDetailPage = () => {
       }
 
       // Show detailed error in console for debugging
-      console.error("Final error message:", errorMessage);
+      // console.error("Final error message:", errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsImporting(false);
@@ -863,7 +878,7 @@ const QuizDetailPage = () => {
             </Button>
             <Button onClick={handleCreateQuestion} disabled={isCreating}>
               {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Question
+              Submit Question
             </Button>
           </DialogFooter>
         </DialogContent>

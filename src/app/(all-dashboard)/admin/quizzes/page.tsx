@@ -336,7 +336,7 @@ const AdminQuizManagement = () => {
   const handleImportQuestions = async (questions: Partial<IQuestion>[]) => {
     try {
       setIsImporting(true);
-      console.log("Importing questions:", questions);
+      // console.log("Importing questions:", questions);
 
       // Validate questions before sending
       const validationErrors: string[] = [];
@@ -383,8 +383,8 @@ const AdminQuizManagement = () => {
       await dispatch(importQuestions(questions)).unwrap();
       toast.success(`${questions.length} questions imported successfully`);
     } catch (error: unknown) {
-      console.error("Import error:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      // console.error("Import error:", error);
+      // console.error("Error details:", JSON.stringify(error, null, 2));
 
       let errorMessage = "Failed to import questions";
 
@@ -408,7 +408,7 @@ const AdminQuizManagement = () => {
       }
 
       // Show detailed error in console for debugging
-      console.error("Final error message:", errorMessage);
+      // console.error("Final error message:", errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsImporting(false);

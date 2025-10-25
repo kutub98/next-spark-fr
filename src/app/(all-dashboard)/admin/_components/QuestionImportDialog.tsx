@@ -34,6 +34,8 @@ import {
 import { IQuestion } from "@/redux/features/questionSlice";
 import { Quiz } from "@/redux/features/quizSlice";
 import { GeminiOCRService, ExtractedQuestion } from "@/lib/ocr/gemini-ocr";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface QuestionImportDialogProps {
   quizzes: Quiz[];
@@ -92,18 +94,16 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
     setProcessingStatus("Starting file processing...");
 
     try {
-      console.log("Starting file processing...", selectedFiles.length, "files");
-
       // Process files one by one to avoid overwhelming the API
       const allQuestions: ExtractedQuestion[] = [];
       const allErrors: string[] = [];
 
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
-        console.log(
-          `Processing file ${i + 1}/${selectedFiles.length}:`,
-          file.name
-        );
+        // console.log(
+        //   `Processing file ${i + 1}/${selectedFiles.length}:`,
+        //   file.name
+        // );
 
         setProcessingStatus(
           `Processing file ${i + 1}/${selectedFiles.length}: ${file.name}`
@@ -114,9 +114,9 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
 
           if (result.success && result.questions.length > 0) {
             allQuestions.push(...result.questions);
-            console.log(
-              `Extracted ${result.questions.length} questions from ${file.name}`
-            );
+            // console.log(
+            //   `Extracted ${result.questions.length} questions from ${file.name}`
+            // );
             setProcessingStatus(
               `Successfully extracted ${result.questions.length} questions from ${file.name}`
             );
@@ -130,7 +130,7 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
             );
           }
         } catch (fileError) {
-          console.error(`Error processing file ${file.name}:`, fileError);
+          // console.error(`Error processing file ${file.name}:`, fileError);
           const errorMessage =
             fileError instanceof Error ? fileError.message : "Unknown error";
           allErrors.push(`${file.name}: ${errorMessage}`);
@@ -155,9 +155,9 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
         setExtractedQuestions(filteredQuestions);
         setErrors(allErrors);
 
-        console.log(
-          `Successfully extracted ${filteredQuestions.length} questions`
-        );
+        // console.log(
+        //   `Successfully extracted ${filteredQuestions.length} questions`
+        // );
         setProcessingStatus(
           `Successfully extracted ${filteredQuestions.length} questions from ${selectedFiles.length} file(s)`
         );
@@ -187,7 +187,7 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
         }
       }
     } catch (error) {
-      console.error("Error in handleProcessFiles:", error);
+      // console.error("Error in handleProcessFiles:", error);
       setErrors([
         error instanceof Error ? error.message : "Failed to process files",
       ]);
@@ -220,9 +220,10 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
     setExtractedQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const user = useSelector((state: RootState) => state.auth.user);
+
   const handleImportQuestions = () => {
     if (extractedQuestions.length === 0) return;
-
     // Get questions based on range selection
     let questionsToProcess = extractedQuestions;
     if (useRangeSelection && showRangeSelector) {
@@ -239,7 +240,9 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
           questionType: q.type,
           marks: q.marks,
           difficulty: q.difficulty,
-          explanation: "", // Add explanation field
+          explanation: "",
+          createdBy: user?._id || "",
+          // Add explanation field
         };
 
         // Add type-specific fields
@@ -275,7 +278,6 @@ const QuestionImportDialog: React.FC<QuestionImportDialogProps> = ({
       }
     );
 
-    console.log("Questions to import:", questionsToImport);
     onImportQuestions(questionsToImport);
     setIsOpen(false);
     resetForm();

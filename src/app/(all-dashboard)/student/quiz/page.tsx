@@ -128,6 +128,8 @@ const StudentQuizTaking = () => {
     }));
   };
 
+  const user = useSelector((state: RootState) => state.auth.user);
+
   const handleSubmitQuiz = async () => {
     try {
       setIsSubmitting(true);

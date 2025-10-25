@@ -119,9 +119,16 @@ export const deleteQuestion = createAsyncThunk<
 export const bulkDeleteQuestions = createAsyncThunk<string[], string[]>(
   "questions/bulkDelete",
   async (ids) => {
-    const response = await axios.delete(`${api}/questions/bulk`, {
-      data: { questionIds: ids },
-    });
+    const response = await axios.post(
+      `${api}/questions/bulk/delete`,
+      { questionIds: ids },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+      }
+    );
 
     // Return the deleted IDs from the response
     return response.data.data?.deletedIds || ids;
@@ -177,9 +184,18 @@ export const importQuestions = createAsyncThunk<
   IQuestion[],
   Partial<IQuestion>[]
 >("questions/import", async (questionsData) => {
-  const res = await axios.post(`${api}/questions/bulk`, {
-    questions: questionsData,
-  });
+  const res = await axios.post(
+    `${api}/questions/bulk`,
+    {
+      questions: questionsData,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      },
+    }
+  );
   return res.data.data as IQuestion[];
 });
 

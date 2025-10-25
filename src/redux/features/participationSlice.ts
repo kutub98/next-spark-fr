@@ -84,7 +84,7 @@ export const createParticipation = createAsyncThunk<
     throw new Error("No authentication token found");
   }
 
-  const res = await axios.post(`${api}/participations`, participationData, {
+  const res = await axios.post(`${api}/v1/participations`, participationData, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -107,14 +107,25 @@ export const updateParticipation = createAsyncThunk<
   IParticipation,
   { id: string; data: Partial<IParticipation> }
 >("participations/update", async ({ id, data }) => {
-  const res = await axios.patch(`${api}/participations/${id}`, data);
+  const token = localStorage.getItem("token");
+  const res = await axios.put(`${api}/participations/${id}`, data, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token || ""}`,
+    },
+  });
   return res.data.data as IParticipation;
 });
 
 export const deleteParticipation = createAsyncThunk<string, string>(
   "participations/delete",
   async (id) => {
-    await axios.delete(`${api}/participations/${id}`);
+    const token = localStorage.getItem("token");
+    await axios.delete(`${api}/participations/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token || ""}`,
+      },
+    });
     return id;
   }
 );

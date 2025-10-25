@@ -41,6 +41,8 @@ import {
   ArrowRight,
   Edit,
   Trash2,
+  Calendar,
+  Hash,
 } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
@@ -62,10 +64,11 @@ const EventDetailPage = () => {
     title: "",
     eventId: eventId,
     duration: 30,
-    totalMarks: 0,
-    passingMarks: 0,
     instructions: "",
     isActive: true,
+    totalQuestions: 1,
+    startTime: new Date().toISOString(),
+    endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   });
 
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
@@ -86,34 +89,42 @@ const EventDetailPage = () => {
   }, [dispatch, eventId]);
 
   const handleCreateQuiz = async () => {
-    if (!newQuiz.title || !newQuiz.duration) {
+    if (
+      !newQuiz.title ||
+      !newQuiz.duration ||
+      !newQuiz.totalQuestions ||
+      !newQuiz.startTime ||
+      !newQuiz.endTime
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
-
-    console.log(newQuiz, "newQuiz");
 
     try {
       setIsCreating(true);
       await dispatch(createQuiz(newQuiz)).unwrap();
       toast.success("Quiz created successfully");
+
+      // Refresh the quiz list
+      await dispatch(getQuizzesByEventId(eventId));
+
       setNewQuiz({
         title: "",
         eventId: eventId,
         duration: 30,
-        totalMarks: 0,
-        passingMarks: 0,
         instructions: "",
         isActive: true,
+        totalQuestions: 1,
+        startTime: new Date().toISOString(),
+        endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       });
       setCreateDialogOpen(false);
     } catch (error) {
-      console.log(error, "error");
+      // console.error("Create quiz error:", error);
 
-      let errorMessage;
+      let errorMessage = "Failed to create quiz";
 
       if (axios.isAxiosError(error)) {
-        // Axios error
         errorMessage = error.response?.data?.message || error.message;
       } else if (error instanceof Error) {
         errorMessage = error.message;
@@ -126,27 +137,60 @@ const EventDetailPage = () => {
   };
 
   const handleEditQuiz = (quiz: Quiz) => {
-    setEditingQuiz(quiz);
+    setEditingQuiz({ ...quiz });
     setEditDialogOpen(true);
   };
 
   const handleUpdateQuiz = async () => {
-    if (!editingQuiz?.title || !editingQuiz?.duration) {
+    if (
+      !editingQuiz?.title ||
+      !editingQuiz?.duration ||
+      !editingQuiz?.totalQuestions ||
+      !editingQuiz?.startTime ||
+      !editingQuiz?.endTime
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setIsUpdating(true);
+
+      // Clean the data before sending
+      const updateData = {
+        title: editingQuiz.title,
+        duration: editingQuiz.duration,
+        totalMarks: editingQuiz.totalMarks,
+        passingMarks: editingQuiz.passingMarks,
+        totalQuestions: editingQuiz.totalQuestions,
+        startTime: editingQuiz.startTime,
+        endTime: editingQuiz.endTime,
+        instructions: editingQuiz.instructions,
+        isActive: editingQuiz.isActive,
+      };
+
       await dispatch(
-        updateQuiz({ id: editingQuiz._id, data: editingQuiz })
+        updateQuiz({ id: editingQuiz._id, data: updateData })
       ).unwrap();
+
       toast.success("Quiz updated successfully");
+
+      // Refresh the quiz list
+      await dispatch(getQuizzesByEventId(eventId));
+
       setEditDialogOpen(false);
       setEditingQuiz(null);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update quiz";
+      // console.error("Update quiz error:", error);
+
+      let errorMessage = "Failed to update quiz";
+
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast.error(errorMessage);
     } finally {
       setIsUpdating(false);
@@ -165,14 +209,40 @@ const EventDetailPage = () => {
       setIsDeleting(true);
       await dispatch(deleteQuiz(quizToDelete._id)).unwrap();
       toast.success("Quiz deleted successfully");
+
+      // Refresh the quiz list
+      await dispatch(getQuizzesByEventId(eventId));
+
       setDeleteDialogOpen(false);
       setQuizToDelete(null);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to delete quiz";
+      // console.error("Delete quiz error:", error);
+
+      let errorMessage = "Failed to delete quiz";
+
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "N/A";
     }
   };
 
@@ -261,67 +331,102 @@ const EventDetailPage = () => {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{quiz.title}</CardTitle>
+                    <div className="flex items-center gap-2 mb-1">
+                      <CardTitle className="text-lg">{quiz.title}</CardTitle>
+                      {quiz.isActive === true ? (
+                        <Badge variant="default" className="text-xs">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">
+                          Inactive
+                        </Badge>
+                      )}
+                    </div>
                     <CardDescription className="mt-1">
                       {quiz.instructions || "No instructions"}
                     </CardDescription>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {!quiz.isActive && (
-                      <Badge variant="outline" className="text-xs">
-                        Inactive
-                      </Badge>
-                    )}
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditQuiz(quiz);
-                        }}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteQuiz(quiz);
-                        }}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center space-x-1 ml-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditQuiz(quiz);
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteQuiz(quiz);
+                      }}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="h-4 w-4 mr-2" />
+                    <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span>{quiz.duration} minutes</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-4">
-                      <div>
-                        <span className="text-gray-500">Total Marks:</span>
-                        <Badge variant="secondary" className="ml-1">
-                          {quiz.totalMarks}
-                        </Badge>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Passing:</span>
-                        <Badge variant="outline" className="ml-1">
-                          {quiz.passingMarks}
-                        </Badge>
-                      </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Hash className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span>{quiz.totalQuestions || 0} questions</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Total Marks:</span>
+                      <Badge variant="secondary" className="ml-1">
+                        {typeof quiz.totalMarks === "number"
+                          ? quiz.totalMarks
+                          : "Not set"}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Passing:</span>
+                      <Badge variant="outline" className="ml-1">
+                        {typeof quiz.passingMarks === "number"
+                          ? quiz.passingMarks
+                          : "Not set"}
+                      </Badge>
                     </div>
                   </div>
+
+                  {quiz.startTime && (
+                    <div className="flex items-start text-sm text-gray-600">
+                      <Calendar className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium">Start:</span>
+                        <span className="text-xs">
+                          {formatDateTime(quiz.startTime)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {quiz.endTime && (
+                    <div className="flex items-start text-sm text-gray-600">
+                      <Calendar className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium">End:</span>
+                        <span className="text-xs">
+                          {formatDateTime(quiz.endTime)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="pt-2">
                     <Link
@@ -342,7 +447,7 @@ const EventDetailPage = () => {
 
       {/* Create Quiz Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Quiz</DialogTitle>
             <DialogDescription>
@@ -369,7 +474,7 @@ const EventDetailPage = () => {
                   id="quizDuration"
                   type="number"
                   min="1"
-                  value={newQuiz.duration || 0}
+                  value={newQuiz.duration || ""}
                   onChange={(e) =>
                     setNewQuiz({
                       ...newQuiz,
@@ -381,37 +486,104 @@ const EventDetailPage = () => {
                 />
               </div>
               <div className="grid gap-2">
+                <Label htmlFor="totalQuestions">Total Questions *</Label>
+                <Input
+                  id="totalQuestions"
+                  type="number"
+                  min="1"
+                  value={
+                    typeof newQuiz.totalQuestions === "number"
+                      ? newQuiz.totalQuestions
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setNewQuiz({
+                      ...newQuiz,
+                      totalQuestions: Number(e.target.value),
+                    })
+                  }
+                  placeholder="Total questions"
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
                 <Label htmlFor="totalMarks">Total Marks</Label>
                 <Input
                   id="totalMarks"
                   type="number"
                   min="0"
-                  value={newQuiz.totalMarks || 0}
+                  value={newQuiz.totalMarks ?? ""}
                   onChange={(e) =>
                     setNewQuiz({
                       ...newQuiz,
-                      totalMarks: Number(e.target.value),
+                      totalMarks: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
                     })
                   }
                   placeholder="Total marks"
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="passingMarks">Passing Marks</Label>
+                <Input
+                  id="passingMarks"
+                  type="number"
+                  min="0"
+                  value={newQuiz.passingMarks ?? ""}
+                  onChange={(e) =>
+                    setNewQuiz({
+                      ...newQuiz,
+                      passingMarks: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
+                  }
+                  placeholder="Passing marks"
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="passingMarks">Passing Marks</Label>
-              <Input
-                id="passingMarks"
-                type="number"
-                min="0"
-                value={newQuiz.passingMarks || 0}
-                onChange={(e) =>
-                  setNewQuiz({
-                    ...newQuiz,
-                    passingMarks: Number(e.target.value),
-                  })
-                }
-                placeholder="Passing marks"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="startTime">Start Time *</Label>
+                <Input
+                  id="startTime"
+                  type="datetime-local"
+                  value={
+                    newQuiz.startTime && typeof newQuiz.startTime === "string"
+                      ? new Date(newQuiz.startTime).toISOString().slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setNewQuiz({
+                      ...newQuiz,
+                      startTime: new Date(e.target.value).toISOString(),
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="endTime">End Time *</Label>
+                <Input
+                  id="endTime"
+                  type="datetime-local"
+                  value={
+                    newQuiz.endTime && typeof newQuiz.endTime === "string"
+                      ? new Date(newQuiz.endTime).toISOString().slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setNewQuiz({
+                      ...newQuiz,
+                      endTime: new Date(e.target.value).toISOString(),
+                    })
+                  }
+                  required
+                />
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="quizInstructions">Instructions</Label>
@@ -421,7 +593,7 @@ const EventDetailPage = () => {
                 onChange={(e) =>
                   setNewQuiz({ ...newQuiz, instructions: e.target.value })
                 }
-                placeholder="Quiz instructions"
+                placeholder="Quiz instructions (optional)"
                 rows={3}
               />
             </div>
@@ -429,7 +601,7 @@ const EventDetailPage = () => {
               <input
                 type="checkbox"
                 id="quizActive"
-                checked={newQuiz.isActive !== false}
+                checked={newQuiz.isActive === true}
                 onChange={(e) =>
                   setNewQuiz({ ...newQuiz, isActive: e.target.checked })
                 }
@@ -444,6 +616,7 @@ const EventDetailPage = () => {
             <Button
               variant="outline"
               onClick={() => setCreateDialogOpen(false)}
+              disabled={isCreating}
             >
               Cancel
             </Button>
@@ -457,7 +630,7 @@ const EventDetailPage = () => {
 
       {/* Edit Quiz Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Quiz</DialogTitle>
             <DialogDescription>Update the quiz details.</DialogDescription>
@@ -482,7 +655,7 @@ const EventDetailPage = () => {
                   id="editQuizDuration"
                   type="number"
                   min="1"
-                  value={editingQuiz?.duration || 0}
+                  value={editingQuiz?.duration ?? ""}
                   onChange={(e) =>
                     setEditingQuiz({
                       ...editingQuiz!,
@@ -494,37 +667,110 @@ const EventDetailPage = () => {
                 />
               </div>
               <div className="grid gap-2">
+                <Label htmlFor="editTotalQuestions">Total Questions *</Label>
+                <Input
+                  id="editTotalQuestions"
+                  type="number"
+                  min="1"
+                  value={
+                    typeof editingQuiz?.totalQuestions === "number"
+                      ? editingQuiz.totalQuestions
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setEditingQuiz({
+                      ...editingQuiz!,
+                      totalQuestions: Number(e.target.value),
+                    })
+                  }
+                  placeholder="Total questions"
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
                 <Label htmlFor="editTotalMarks">Total Marks</Label>
                 <Input
                   id="editTotalMarks"
                   type="number"
                   min="0"
-                  value={editingQuiz?.totalMarks || 0}
-                  onChange={(e) =>
+                  value={editingQuiz?.totalMarks ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value
+                      ? Number(e.target.value)
+                      : undefined;
                     setEditingQuiz({
                       ...editingQuiz!,
-                      totalMarks: Number(e.target.value),
-                    })
-                  }
+                      totalMarks: value,
+                    });
+                  }}
                   placeholder="Total marks"
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="editPassingMarks">Passing Marks</Label>
+                <Input
+                  id="editPassingMarks"
+                  type="number"
+                  min="0"
+                  value={editingQuiz?.passingMarks ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value
+                      ? Number(e.target.value)
+                      : undefined;
+                    setEditingQuiz({
+                      ...editingQuiz!,
+                      passingMarks: value,
+                    });
+                  }}
+                  placeholder="Passing marks"
+                />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="editPassingMarks">Passing Marks</Label>
-              <Input
-                id="editPassingMarks"
-                type="number"
-                min="0"
-                value={editingQuiz?.passingMarks || 0}
-                onChange={(e) =>
-                  setEditingQuiz({
-                    ...editingQuiz!,
-                    passingMarks: Number(e.target.value),
-                  })
-                }
-                placeholder="Passing marks"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="editStartTime">Start Time *</Label>
+                <Input
+                  id="editStartTime"
+                  type="datetime-local"
+                  value={
+                    editingQuiz?.startTime &&
+                    typeof editingQuiz.startTime === "string"
+                      ? new Date(editingQuiz.startTime)
+                          .toISOString()
+                          .slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setEditingQuiz({
+                      ...editingQuiz!,
+                      startTime: new Date(e.target.value).toISOString(),
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="editEndTime">End Time *</Label>
+                <Input
+                  id="editEndTime"
+                  type="datetime-local"
+                  value={
+                    editingQuiz?.endTime &&
+                    typeof editingQuiz.endTime === "string"
+                      ? new Date(editingQuiz.endTime).toISOString().slice(0, 16)
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setEditingQuiz({
+                      ...editingQuiz!,
+                      endTime: new Date(e.target.value).toISOString(),
+                    })
+                  }
+                  required
+                />
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="editQuizInstructions">Instructions</Label>
@@ -537,7 +783,7 @@ const EventDetailPage = () => {
                     instructions: e.target.value,
                   })
                 }
-                placeholder="Quiz instructions"
+                placeholder="Quiz instructions (optional)"
                 rows={3}
               />
             </div>
@@ -545,7 +791,7 @@ const EventDetailPage = () => {
               <input
                 type="checkbox"
                 id="editQuizActive"
-                checked={editingQuiz?.isActive !== false}
+                checked={editingQuiz?.isActive === true}
                 onChange={(e) =>
                   setEditingQuiz({
                     ...editingQuiz!,
@@ -560,7 +806,11 @@ const EventDetailPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={isUpdating}
+            >
               Cancel
             </Button>
             <Button onClick={handleUpdateQuiz} disabled={isUpdating}>
@@ -585,6 +835,7 @@ const EventDetailPage = () => {
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
