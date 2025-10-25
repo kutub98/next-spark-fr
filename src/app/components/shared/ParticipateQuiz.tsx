@@ -247,8 +247,6 @@ export default function ParticipateQuiz({
     }
   }, [dispatch, open, quizId]);
 
-  
-
   const calculateScore = useCallback(() => {
     return answers.reduce((total, answer) => total + answer.marksObtained, 0);
   }, [answers]);
@@ -303,8 +301,10 @@ export default function ParticipateQuiz({
               fetch(`${api}/participations/${participationId}/submit-answer`, {
                 method: "POST",
                 headers: {
-                'Content-Type': 'multipart/form-data', 
-                Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+                  "Content-Type": "multipart/form-data",
+                  Authorization: `Bearer ${
+                    localStorage.getItem("token") || ""
+                  }`,
                 },
                 body: form,
               })
