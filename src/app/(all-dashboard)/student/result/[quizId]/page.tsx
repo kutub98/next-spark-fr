@@ -118,11 +118,13 @@ const StudentResultView = () => {
 
   const getPerformanceLevel = (
     score: number,
-    totalMarks: number,
-    passingMarks: number
+    totalMarks: number | undefined,
+    passingMarks: number | undefined
   ) => {
-    const percentage = (score / totalMarks) * 100;
-    const passingPercentage = (passingMarks / totalMarks) * 100;
+    const validTotalMarks = totalMarks || 0;
+    const validPassingMarks = passingMarks || 0;
+    const percentage = (score / validTotalMarks) * 100;
+    const passingPercentage = (validPassingMarks / validTotalMarks) * 100;
 
     if (percentage >= 90)
       return {
@@ -151,8 +153,9 @@ const StudentResultView = () => {
     return { level: "Failed", color: "text-red-600", bgColor: "bg-red-100" };
   };
 
-  const getRewardPoints = (score: number, totalMarks: number) => {
-    const percentage = (score / totalMarks) * 100;
+  const getRewardPoints = (score: number, totalMarks?: number) => {
+    const validTotal = totalMarks && totalMarks > 0 ? totalMarks : 1;
+    const percentage = (score / validTotal) * 100;
     if (percentage >= 90) return 100;
     if (percentage >= 80) return 80;
     if (percentage >= 70) return 60;
@@ -198,7 +201,15 @@ const StudentResultView = () => {
     participation.totalScore,
     selectedQuiz.totalMarks
   );
-  const percentage = (participation.totalScore / selectedQuiz.totalMarks) * 100;
+  const percentage =
+    selectedQuiz.totalMarks && selectedQuiz.totalMarks > 0
+      ? (participation.totalScore / selectedQuiz.totalMarks) * 100
+      : 0;
+  // const percentage = (participation.totalScore / selectedQuiz.totalMarks) * 100;
+
+  // Safely determine pass status even if selectedQuiz.passingMarks is undefined
+  const hasPassed =
+    participation.totalScore >= (selectedQuiz.passingMarks ?? 0);
 
   return (
     <div className="container mx-auto py-8">
@@ -279,14 +290,12 @@ const StudentResultView = () => {
               <div
                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${performance.bgColor} ${performance.color}`}
               >
-                {participation.totalScore >= selectedQuiz.passingMarks ? (
+                {hasPassed ? (
                   <CheckCircle className="h-4 w-4 mr-1" />
                 ) : (
                   <XCircle className="h-4 w-4 mr-1" />
                 )}
-                {participation.totalScore >= selectedQuiz.passingMarks
-                  ? "Passed"
-                  : "Failed"}
+                {hasPassed ? "Passed" : "Failed"}
               </div>
             </div>
           </CardContent>
@@ -472,11 +481,8 @@ const StudentResultView = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Status:</span>
                   <span className={`font-medium ${performance.color}`}>
-                    {participation.totalScore >= selectedQuiz.passingMarks
-                      ? "Passed"
-                      : "Failed"}
+                    {hasPassed ? "Passed" : "Failed"}
                   </span>
                 </div>
               </div>

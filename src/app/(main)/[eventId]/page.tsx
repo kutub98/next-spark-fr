@@ -273,8 +273,8 @@ export default function QuizzesBasedOnEvent() {
                           quizId={quiz._id}
                           quizTitle={quiz.title}
                           duration={quiz.duration}
-                          totalMarks={quiz.totalMarks}
-                          passingMarks={quiz.passingMarks}
+                          totalMarks={quiz.totalMarks ?? 0}
+                          passingMarks={quiz.passingMarks ?? 0}
                           eventId={eventId}
                         />
                       </div>
