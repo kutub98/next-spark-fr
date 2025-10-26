@@ -268,7 +268,7 @@ export default function ParticipateQuiz({
     try {
       const created = await dispatch(
         createParticipation({
-          studentId: userId!,
+          userId: userId!,
           quizId,
           answers,
           totalScore,
@@ -433,6 +433,20 @@ export default function ParticipateQuiz({
   };
 
   const startQuiz = async () => {
+    // ✅ Check authentication first
+    if (!currentUser || !currentUser._id) {
+      toast.error("User not found. Please login first.");
+      router.push("/auth");
+      return;
+    }
+
+    // ✅ Ensure event ID exists (if event-based quiz)
+    if (!eventId) {
+      toast.error("Event information missing. Please try again later.");
+      return;
+    }
+
+    // ✅ Prepare initial answers
     let initialAnswers: IAnswer[] = [];
     try {
       if (quizQuestions && quizQuestions.length > 0) {
@@ -441,33 +455,40 @@ export default function ParticipateQuiz({
           selectedOption: "",
           isCorrect: false,
           marksObtained: 0,
+          eventId: eventId,
         }));
       } else {
-        initialAnswers = [];
+        toast.error("No questions found in this quiz.");
+        return;
       }
     } catch (error) {
       console.error("Failed to initialize answers:", error);
-      initialAnswers = [];
+      toast.error(
+        "Failed to prepare quiz answers. Please refresh and try again."
+      );
+      return;
     }
 
-    if (eventId && currentUser?._id) {
-      try {
-        await dispatch(
-          addParticipant({
-            eventId,
-            studentId: currentUser._id,
-          })
-        ).unwrap();
-      } catch (error: unknown) {
-        console.log("Add participant error:", error);
-        console.log("Continuing with quiz regardless of participant status");
-      }
+    // ✅ Register participant before starting
+    try {
+      await dispatch(
+        addParticipant({
+          eventId: eventId,
+          userId: currentUser._id, // ✅ Must be userId (NOT studentId)
+        })
+      ).unwrap();
+    } catch (error: unknown) {
+      console.warn("Add participant error:", error);
+      toast.warning("Unable to register you as a participant, continuing...");
     }
 
+    // ✅ Start quiz
     dispatchQuiz({
       type: "START_QUIZ",
       payload: { answers: initialAnswers },
     });
+
+    toast.success("Quiz started. Good luck!");
   };
 
   const handleAnswerChange = (questionId: string, selectedOption: string) => {
@@ -971,7 +992,7 @@ export default function ParticipateQuiz({
                       disabled={isSubmitting}
                       className="bg-primary hover:bg-primary/80 text-white"
                     >
-                      {isSubmitting ? "Submitting..." : "Submit Quiz"}
+                      {isSubmitting ? "Submitting..." : "Submit Quiz asdfas"}
                     </Button>
                   ) : (
                     <Button

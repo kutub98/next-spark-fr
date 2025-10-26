@@ -126,13 +126,13 @@ export const updateEvent = createAsyncThunk(
 export const addParticipant = createAsyncThunk(
   "events/addParticipant",
   async (
-    { eventId, studentId }: { eventId: string; studentId: string },
+    { eventId, userId }: { eventId: string; userId: string },
     { rejectWithValue }
   ) => {
     try {
       const response = await axios.post(
         `${api}/events/add-participant`,
-        { eventId, studentId },
+        { eventId, userId },
         { headers: { ...getAuthHeaders(), "Content-Type": "application/json" } }
       );
       return response.data.data;
