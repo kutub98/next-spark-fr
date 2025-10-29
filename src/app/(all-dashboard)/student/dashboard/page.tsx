@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -46,6 +47,7 @@ const StudentDashboard = () => {
     loadData();
   }, [loadData]);
 
+  // ✅ Badge based on status
   const getParticipationBadge = (status: string) => {
     switch (status) {
       case "completed":
@@ -61,24 +63,19 @@ const StudentDashboard = () => {
     }
   };
 
-  const filteredParticipations = participations.filter((participation) => {
-    const quizTitle =
-      typeof participation.quizId === "object"
-        ? participation.quizId.title
-        : participation.quizId;
-
+  // ✅ Filtering based on search + status
+  const filteredParticipations = participations.filter((p) => {
+    const quizTitle = p.quiz?.title || "";
     const matchesSearch =
       searchTerm === "" ||
       quizTitle.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || participation.status === statusFilter;
-
+    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="container mx-auto py-8">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">ড্যাশবোর্ড</h1>
@@ -86,9 +83,7 @@ const StudentDashboard = () => {
             আপনার কুইজ অংশগ্রহণের সামগ্রিক অবস্থা দেখুন
           </p>
         </div>
-        <div className="flex items-center space-x-4">
-          <RewardPoints size="lg" />
-        </div>
+        <RewardPoints size="lg" />
       </div>
 
       {/* Search and Filter */}
@@ -104,7 +99,7 @@ const StudentDashboard = () => {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder="অবস্থা অনুযায়ী ফিল্টার" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">সব ফলাফল</SelectItem>
@@ -115,8 +110,8 @@ const StudentDashboard = () => {
         </Select>
       </div>
 
-      {/* Participation Results */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Participations Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {filteredParticipations.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -128,71 +123,38 @@ const StudentDashboard = () => {
             </p>
           </div>
         ) : (
-          filteredParticipations.map((participation) => (
-            <Card
-              key={participation._id}
-              className="hover:shadow-lg transition-shadow"
-            >
+          filteredParticipations.map((p) => (
+            <Card key={p._id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">
-                      {typeof participation.quizId === "object"
-                        ? participation.quizId.title
-                        : `Quiz ID: ${participation.quizId}`}
+                    <CardTitle className="text-lg font-semibold">
+                      {p.quiz?.title || "অজানা কুইজ"}
                     </CardTitle>
-                    <CardDescription className="mt-2">
-                      {typeof participation.quizId === "object"
-                        ? `Duration: ${participation.quizId.duration} minutes`
-                        : "Participation Result"}
+                    <CardDescription className="mt-1 text-gray-500">
+                      মোট প্রশ্ন: {p.quiz?.totalQuestions || 0} | সময়:{" "}
+                      {p.quiz?.duration || 0} মিনিট
                     </CardDescription>
-                    <div className="flex items-center space-x-4 mt-2">
-                      <span className="text-sm text-gray-500">
-                        স্কোর: {participation.totalScore}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        জমা:{" "}
-                        {new Date(participation.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {getParticipationBadge(participation.status)}
-                  </div>
+                  {getParticipationBadge(p.status)}
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Trophy className="h-4 w-4 mr-2" />
+                  <div className="flex items-center text-sm text-gray-700">
+                    <Trophy className="h-4 w-4 mr-2 text-yellow-500" />
                     <span>
-                      স্কোর: {participation.totalScore}
-                      {typeof participation.quizId === "object"
-                        ? ` / ${participation.quizId.totalMarks}`
-                        : ""}
+                      স্কোর: {p.obtainedMarks} / {p.totalMarks}
                     </span>
                   </div>
-                  {typeof participation.quizId === "object" && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>সময়: {participation.quizId.duration} মিনিট</span>
-                    </div>
-                  )}
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 mr-2" />
+                  <div className="flex items-center text-sm text-gray-700">
+                    <Calendar className="h-4 w-4 mr-2 text-blue-500" />
                     <span>
-                      জমা দেওয়া:{" "}
-                      {new Date(participation.createdAt).toLocaleDateString()}
+                      জমা: {new Date(p.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   <div className="pt-2">
-                    <Link
-                      href={`/student/result/${
-                        typeof participation.quizId === "object"
-                          ? participation.quizId._id
-                          : participation.quizId
-                      }`}
-                    >
+                    <Link href={`/student/result/${p._id}`}>
                       <Button size="sm" className="w-full">
                         বিস্তারিত ফলাফল দেখুন
                       </Button>

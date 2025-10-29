@@ -25,6 +25,7 @@ export interface IQuiz {
   eventId: string;
   duration: number;
   totalMarks: number;
+  totalQuestions?: number;
   questions: unknown[];
   isActive: boolean;
   passingMarks: number;
@@ -36,9 +37,12 @@ export interface IQuiz {
 
 export interface IParticipation {
   _id: string;
+  quiz?: IQuiz;
   studentId: string | IStudent;
   quizId: string | IQuiz;
   answers: IAnswer[];
+  obtainedMarks?: number;
+  totalMarks?: number;
   totalScore: number;
   status: "completed" | "failed" | "pending";
   createdAt: string;
@@ -89,7 +93,7 @@ export const createParticipation = createAsyncThunk<
       Authorization: `Bearer ${token}`,
     },
   });
-  console.log(res, 'created participation');
+  console.log(res, "created participation");
 
   return res.data.data as IParticipation;
 });
