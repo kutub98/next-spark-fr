@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
@@ -36,7 +37,7 @@ const StudentResultView = () => {
   const dispatch = useDispatch<AppDispatch>();
   const params = useParams();
   const router = useRouter();
-  const quizId = params.quizId as string;
+  const participationId = params.id as string; // ✅ the dynamic route param (use /student/result/[id])
 
   const { selectedQuiz, loading: quizLoading } = useSelector(
     (state: RootState) => state.quizzes
@@ -44,7 +45,7 @@ const StudentResultView = () => {
   const { questions, loading: questionsLoading } = useSelector(
     (state: RootState) => state.questions
   );
-  const { participations, loading: participationLoading } = useSelector(
+  const { loading: participationLoading } = useSelector(
     (state: RootState) => state.participations
   );
   const { user } = useSelector((state: RootState) => state.auth);
@@ -57,36 +58,33 @@ const StudentResultView = () => {
   const loadResultData = useCallback(async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        dispatch(getQuizById(quizId)),
-        dispatch(fetchQuestionsByQuizId(quizId)),
-      ]);
 
-      // Find participation for this quiz
-      const userParticipation = participations.find((p) => p.quizId === quizId);
-      if (userParticipation) {
-        setParticipation(userParticipation);
-      } else {
-        // Try to fetch participation by ID if not found
-        try {
-          const result = await dispatch(getParticipationById(quizId)).unwrap();
-          setParticipation(result);
-        } catch (error) {
-          console.error("Error fetching participation:", error);
-        }
+      // ✅ Step 1: Get participation by ID
+      const participationData = await dispatch(
+        getParticipationById(participationId)
+      ).unwrap();
+      setParticipation(participationData);
+
+      // ✅ Step 2: Load quiz & questions using the quiz ID from participation
+      if (participationData?.quiz?._id) {
+        await Promise.all([
+          dispatch(getQuizById(participationData.quiz._id)),
+          dispatch(fetchQuestionsByQuizId(participationData.quiz._id)),
+        ]);
       }
-    } catch {
+    } catch (error) {
+      console.error("Error loading result data:", error);
       toast.error("Failed to load result data");
     } finally {
       setLoading(false);
     }
-  }, [dispatch, quizId, participations]);
+  }, [dispatch, participationId]);
 
   useEffect(() => {
-    if (quizId) {
+    if (participationId) {
       loadResultData();
     }
-  }, [quizId, loadResultData]);
+  }, [participationId, loadResultData]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -121,10 +119,10 @@ const StudentResultView = () => {
     totalMarks: number | undefined,
     passingMarks: number | undefined
   ) => {
-    const validTotalMarks = totalMarks || 0;
-    const validPassingMarks = passingMarks || 0;
-    const percentage = (score / validTotalMarks) * 100;
-    const passingPercentage = (validPassingMarks / validTotalMarks) * 100;
+    const validTotal = totalMarks || 0;
+    const validPass = passingMarks || 0;
+    const percentage = (score / validTotal) * 100;
+    const passPercent = (validPass / validTotal) * 100;
 
     if (percentage >= 90)
       return {
@@ -144,7 +142,7 @@ const StudentResultView = () => {
         color: "text-yellow-600",
         bgColor: "bg-yellow-100",
       };
-    if (percentage >= passingPercentage)
+    if (percentage >= passPercent)
       return {
         level: "Passed",
         color: "text-orange-600",
@@ -175,19 +173,17 @@ const StudentResultView = () => {
 
   if (!selectedQuiz || !participation) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Result Not Found
-          </h1>
-          <p className="text-gray-600 mb-6">
-            The quiz result you&apos;re looking for doesn&apos;t exist or
-            hasn&apos;t been evaluated yet.
-          </p>
-          <Button onClick={() => router.push("/student/dashboard")}>
-            Back to Dashboard
-          </Button>
-        </div>
+      <div className="container mx-auto py-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          Result Not Found
+        </h1>
+        <p className="text-gray-600 mb-6">
+          The quiz result you&apos;re looking for doesn&apos;t exist or
+          hasn&apos;t been evaluated yet.
+        </p>
+        <Button onClick={() => router.push("/student/dashboard")}>
+          Back to Dashboard
+        </Button>
       </div>
     );
   }
@@ -201,13 +197,12 @@ const StudentResultView = () => {
     participation.totalScore,
     selectedQuiz.totalMarks
   );
+
   const percentage =
     selectedQuiz.totalMarks && selectedQuiz.totalMarks > 0
       ? (participation.totalScore / selectedQuiz.totalMarks) * 100
       : 0;
-  // const percentage = (participation.totalScore / selectedQuiz.totalMarks) * 100;
 
-  // Safely determine pass status even if selectedQuiz.passingMarks is undefined
   const hasPassed =
     participation.totalScore >= (selectedQuiz.passingMarks ?? 0);
 

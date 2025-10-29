@@ -190,6 +190,7 @@ export default function ParticipateQuiz({
   );
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentUser = useSelector(selectCurrentUser);
+
   const isAuthInitialized = useSelector(
     (state: RootState) => state.auth.isAuthInitialized
   );
@@ -205,31 +206,71 @@ export default function ParticipateQuiz({
   }, [isFetchingProfile, currentUser]);
 
   // Check if user has already participated in this quiz
+  // useEffect(() => {
+  //   const checkParticipationStatus = async () => {
+  //     if (isAuthenticated && currentUser && quizId) {
+  //       const userId = currentUser?._id;
+  //       if (userId) {
+  //         setIsCheckingParticipation(true);
+  //         try {
+  //           const result = await dispatch(
+  //             checkParticipation({ studentId: userId, quizId })
+  //           ).unwrap();
+
+  //           console.log(result, "result for paritcipated");
+
+  //           if (result.data?.hasParticipated) {
+  //             setHasParticipated(true);
+
+  //             setParticipationStatus(result.data?.status);
+  //           } else {
+  //             setHasParticipated(false);
+  //             setParticipationStatus(null);
+  //           }
+  //         } catch (error) {
+  //           console.error("Failed to check participation:", error);
+  //           setHasParticipated(false);
+  //           setParticipationStatus(null);
+  //         } finally {
+  //           setIsCheckingParticipation(false);
+  //         }
+  //       }
+  //     } else {
+  //       setHasParticipated(false);
+  //       setParticipationStatus(null);
+  //     }
+  //   };
+
+  //   checkParticipationStatus();
+  // }, [isAuthenticated, currentUser, quizId, dispatch]);
+
   useEffect(() => {
     const checkParticipationStatus = async () => {
       if (isAuthenticated && currentUser && quizId) {
-        const userId = currentUser?._id;
-        if (userId) {
-          setIsCheckingParticipation(true);
-          try {
-            const result = await dispatch(
-              checkParticipation({ studentId: userId, quizId })
-            ).unwrap();
+        const userId = currentUser._id;
+        if (!userId) return;
 
-            if (result.hasParticipated) {
-              setHasParticipated(true);
-              setParticipationStatus(result.status);
-            } else {
-              setHasParticipated(false);
-              setParticipationStatus(null);
-            }
-          } catch (error) {
-            console.error("Failed to check participation:", error);
+        setIsCheckingParticipation(true);
+        try {
+          const { data } = await dispatch(
+            checkParticipation({ studentId: userId, quizId })
+          ).unwrap();
+
+          console.log(data, "Participation check data");
+
+          if (data?.hasParticipated) {
+            setHasParticipated(true);
+            setParticipationStatus(data.status); // 'completed' | 'pending' | 'failed'
+          } else {
             setHasParticipated(false);
             setParticipationStatus(null);
-          } finally {
-            setIsCheckingParticipation(false);
           }
+        } catch (error) {
+          console.error("Failed to check participation:", error);
+          setHasParticipated(false);
+          setParticipationStatus(null);
+        } finally {
+          setIsCheckingParticipation(false);
         }
       } else {
         setHasParticipated(false);

@@ -39,6 +39,8 @@ export default function QuizzesBasedOnEvent() {
     error: quizzesError,
   } = useSelector((state: RootState) => state.quizzes);
 
+  console.log(quizzes, "quizzes checking");
+
   useEffect(() => {
     if (eventId) {
       dispatch(getEventById(eventId));

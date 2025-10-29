@@ -36,7 +36,6 @@ export interface IQuiz {
 }
 
 export interface IParticipation {
-
   _id: string;
   quiz?: IQuiz;
   studentId: string | IStudent;
@@ -49,14 +48,14 @@ export interface IParticipation {
   createdAt: string;
   updatedAt: string;
   user?: {
-    _id: string
-  }
+    _id: string;
+  };
 }
 
 export interface ParticipationState {
   user?: {
-    _id: string
-  },
+    _id: string;
+  };
   participations: IParticipation[];
   loading: boolean;
   error: string | null;
@@ -115,6 +114,17 @@ export const createParticipation = createAsyncThunk<
   console.log("✅ Created participation:", res.data);
   return res.data.data as IParticipation;
 });
+
+// export const checkParticipation = createAsyncThunk(
+//   "participations/check",
+//   async ({ studentId, quizId }: { studentId: string; quizId: string }) => {
+//     const res = await axios.post(`${api}/participations/check`, {
+//       studentId,
+//       quizId,
+//     });
+//     return res.data;
+//   }
+// );
 
 export const checkParticipation = createAsyncThunk(
   "participations/check",
