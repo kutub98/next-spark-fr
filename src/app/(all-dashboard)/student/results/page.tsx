@@ -61,33 +61,35 @@ const StudentResults = () => {
     }
   };
 
-  const filteredParticipations = participations.filter((participation) => {
+  // ✅ Adjusted for backend: use `quiz` instead of `quizId`
+  const filteredParticipations = participations.filter((p) => {
     const quizTitle =
-      typeof participation.quizId === "object"
-        ? participation.quizId.title
-        : participation.quizId;
+      typeof p.quiz === "object" ? p.quiz.title : p.quiz ?? "Unknown";
 
     const matchesSearch =
       searchTerm === "" ||
       quizTitle.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "all" || participation.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate statistics
+  // Calculate stats
   const totalParticipations = participations.length;
   const completedParticipations = participations.filter(
     (p) => p.status === "completed"
   ).length;
-  const totalScore = participations.reduce((sum, p) => sum + p.totalScore, 0);
+  const totalScore = participations.reduce(
+    (sum, p) => sum + (p.obtainedMarks || p.totalScore || 0),
+    0
+  );
   const averageScore =
     totalParticipations > 0 ? (totalScore / totalParticipations).toFixed(1) : 0;
 
   return (
     <div className="container mx-auto py-8">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">কুইজ ফলাফল</h1>
@@ -100,74 +102,66 @@ const StudentResults = () => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-2">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-blue-100 rounded-full">
                 <Trophy className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">
-                  মোট অংশগ্রহণ
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalParticipations}
-                </p>
+                <p className="text-sm text-gray-600">মোট অংশগ্রহণ</p>
+                <p className="text-2xl font-bold">{totalParticipations}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-2">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-green-100 rounded-full">
                 <Award className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">সম্পূর্ণ</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {completedParticipations}
-                </p>
+                <p className="text-sm text-gray-600">সম্পূর্ণ</p>
+                <p className="text-2xl font-bold">{completedParticipations}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-2">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-purple-100 rounded-full">
                 <Target className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">গড় স্কোর</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {averageScore}
-                </p>
+                <p className="text-sm text-gray-600">গড় স্কোর</p>
+                <p className="text-2xl font-bold">{averageScore}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-2">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-orange-100 rounded-full">
                 <Trophy className="h-6 w-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">মোট স্কোর</p>
-                <p className="text-2xl font-bold text-gray-900">{totalScore}</p>
+                <p className="text-sm text-gray-600">মোট স্কোর</p>
+                <p className="text-2xl font-bold">{totalScore}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search + Filter */}
       <div className="flex items-center space-x-4 mb-6">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -191,7 +185,7 @@ const StudentResults = () => {
         </Select>
       </div>
 
-      {/* Results Grid */}
+      {/* Results */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredParticipations.length === 0 ? (
           <div className="col-span-full text-center py-12">
@@ -204,37 +198,31 @@ const StudentResults = () => {
             </p>
           </div>
         ) : (
-          filteredParticipations.map((participation) => (
-            <Card
-              key={participation._id}
-              className="hover:shadow-lg transition-shadow"
-            >
+          filteredParticipations.map((p) => (
+            <Card key={p._id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg">
-                      {typeof participation.quizId === "object"
-                        ? participation.quizId.title
-                        : `কুইজ ID: ${participation.quizId}`}
+                      {typeof p.quiz === "object"
+                        ? p.quiz.title
+                        : `কুইজ ID: ${p.quiz}`}
                     </CardTitle>
                     <CardDescription className="mt-2">
-                      {typeof participation.quizId === "object"
-                        ? `সময়: ${participation.quizId.duration} মিনিট`
+                      {typeof p.quiz === "object"
+                        ? `সময়: ${p.quiz.duration} মিনিট`
                         : "কুইজ ফলাফল"}
                     </CardDescription>
                     <div className="flex items-center space-x-4 mt-2">
                       <span className="text-sm text-gray-500">
-                        স্কোর: {participation.totalScore}
+                        স্কোর: {p.obtainedMarks ?? p.totalScore ?? 0}
                       </span>
                       <span className="text-sm text-gray-500">
-                        জমা:{" "}
-                        {new Date(participation.createdAt).toLocaleDateString()}
+                        জমা: {new Date(p.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {getParticipationBadge(participation.status)}
-                  </div>
+                  <div>{getParticipationBadge(p.status)}</div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -242,31 +230,20 @@ const StudentResults = () => {
                   <div className="flex items-center text-sm text-gray-600">
                     <Trophy className="h-4 w-4 mr-2" />
                     <span>
-                      স্কোর: {participation.totalScore}
-                      {typeof participation.quizId === "object"
-                        ? ` / ${participation.quizId.totalMarks}`
+                      স্কোর: {p.obtainedMarks ?? p.totalScore ?? 0}
+                      {typeof p.quiz === "object"
+                        ? ` / ${p.quiz.totalMarks ?? p.quiz.totalQuestions}`
                         : ""}
                     </span>
                   </div>
-                  {typeof participation.quizId === "object" && (
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>সময়: {participation.quizId.duration} মিনিট</span>
-                    </div>
-                  )}
                   <div className="flex items-center text-sm text-gray-600">
                     <Calendar className="h-4 w-4 mr-2" />
-                    <span>
-                      জমা দেওয়া:{" "}
-                      {new Date(participation.createdAt).toLocaleDateString()}
-                    </span>
+                    <span>সময়: {p.quiz?.duration ?? 0} মিনিট</span>
                   </div>
                   <div className="pt-2">
                     <Link
                       href={`/student/result/${
-                        typeof participation.quizId === "object"
-                          ? participation.quizId._id
-                          : participation.quizId
+                        typeof p.quiz === "object" ? p.quiz._id : p.quiz
                       }`}
                     >
                       <Button size="sm" className="w-full">
