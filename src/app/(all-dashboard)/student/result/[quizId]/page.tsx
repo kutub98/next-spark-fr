@@ -330,7 +330,7 @@ const StudentResultView = () => {
           <div className="space-y-6">
             {questions.map((question, index) => {
               const answer = participation.answers.find(
-                (a) => a.questionId === question._id
+                (a) => a.question === question._id
               );
               const isCorrect = answer?.isCorrect || false;
               const marksObtained = answer?.marksObtained || 0;

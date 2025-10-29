@@ -4,7 +4,7 @@ import { api } from "@/data/api";
 
 // Types
 export interface IAnswer {
-  questionId: string;
+  question: string;
   selectedOption: string;
   isCorrect: boolean;
   marksObtained: number;
@@ -72,7 +72,7 @@ export const fetchParticipations = createAsyncThunk<IParticipation[]>(
 export const createParticipation = createAsyncThunk<
   IParticipation,
   {
-    userId: string;
+    studentId: string;
     quizId: string;
     answers: IAnswer[];
     totalScore: number;
@@ -84,15 +84,13 @@ export const createParticipation = createAsyncThunk<
     throw new Error("No authentication token found");
   }
 
-  const res = await axios.post(
-    `http://localhost:5000/api/participations`,
-    participationData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const res = await axios.post(`${api}/participations`, participationData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  console.log(res, 'created participation');
+
   return res.data.data as IParticipation;
 });
 

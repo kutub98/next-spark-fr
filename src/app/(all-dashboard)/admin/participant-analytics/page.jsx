@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Download } from "lucide-react";
+import { Loader2, RefreshCw, Download, Eye } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -43,7 +43,6 @@ import { AppDispatch } from "@/store/store";
 
 const ParticipantAnalytics = () => {
   const dispatch = useDispatch();
-  const typedDispatch = useDispatch();
 
   const { quizzes, loading: quizzesLoading } = useSelector(
     (state) => state.quizzes
@@ -64,17 +63,16 @@ const ParticipantAnalytics = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    // Load quizzes and participations
-    typedDispatch(getQuizzes());
-    typedDispatch(fetchParticipations());
-  }, [typedDispatch]);
+    dispatch(getQuizzes());
+    dispatch(fetchParticipations());
+  }, [dispatch]);
 
   useEffect(() => {
     if (selectedQuizId) {
-      typedDispatch(getParticipationsByQuiz(selectedQuizId));
-      typedDispatch(fetchQuestionsByQuizId(selectedQuizId));
+      dispatch(getParticipationsByQuiz(selectedQuizId));
+      dispatch(fetchQuestionsByQuizId(selectedQuizId));
     }
-  }, [selectedQuizId, typedDispatch]);
+  }, [selectedQuizId, dispatch]);
 
   const selectedQuiz = useMemo(
     () => quizzes.find((q) => q._id === selectedQuizId),
@@ -85,24 +83,17 @@ const ParticipantAnalytics = () => {
     return participations
       .filter((p) => {
         if (!selectedQuizId) return true;
-        const pid = typeof p.quizId === "string" ? p.quizId : p.quizId?._id;
-        return pid === selectedQuizId;
+        return p.quiz?._id === selectedQuizId;
       })
       .filter((p) =>
         statusFilter === "all" ? true : p.status === statusFilter
       )
       .filter((p) => {
-        const student =
-          typeof p.studentId === "string"
-            ? { fullNameEnglish: p.studentId, contact: "" }
-            : p.studentId;
-        const name =
-          student?.fullNameEnglish || student?.fullNameBangla || "Unknown";
+        const user = p.user || {};
+        const name = user.fullNameEnglish || user.fullNameBangla || "Unknown";
         return (
           name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (student?.contact || "")
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())
+          (user.contact || "").toLowerCase().includes(searchTerm.toLowerCase())
         );
       });
   }, [participations, selectedQuizId, statusFilter, searchTerm]);
@@ -116,13 +107,16 @@ const ParticipantAnalytics = () => {
     return 10;
   };
 
-  const getQuestionText = (questionId) => {
-    const q = questions.find((qq) => qq._id === questionId);
-    return q?.text || "—";
-  };
-
   const openReview = (participation) => {
-    setEditedParticipation(JSON.parse(JSON.stringify(participation)));
+    // ✅ Merge each answer with full question data
+    const mergedAnswers = participation.answers.map((ans) => {
+      const fullQuestion = questions.find((q) => q._id === ans.question) || {};
+      return {
+        ...ans,
+        question: fullQuestion,
+      };
+    });
+    setEditedParticipation({ ...participation, answers: mergedAnswers });
     setReviewOpen(true);
   };
 
@@ -131,25 +125,28 @@ const ParticipantAnalytics = () => {
     const updated = { ...editedParticipation };
     const answers = [...updated.answers];
     const current = { ...answers[index] };
+
     if (field === "marksObtained") {
       const val = Number(value);
       current.marksObtained = Number.isFinite(val) && val >= 0 ? val : 0;
     } else if (field === "isCorrect") {
       current.isCorrect = !!value;
     }
+
     answers[index] = current;
     updated.answers = answers;
-    updated.totalScore = answers.reduce(
+    updated.obtainedMarks = answers.reduce(
       (sum, a) => sum + (a.marksObtained || 0),
       0
     );
-    // Also set status based on passing marks if quiz selected
+
     if (selectedQuiz) {
       updated.status =
-        updated.totalScore >= (selectedQuiz.passingMarks || 0)
+        updated.obtainedMarks >= (selectedQuiz.passingMarks || 0)
           ? "completed"
           : "failed";
     }
+
     setEditedParticipation(updated);
   };
 
@@ -157,12 +154,12 @@ const ParticipantAnalytics = () => {
     if (!editedParticipation) return;
     try {
       setIsSaving(true);
-      await typedDispatch(
+      await dispatch(
         updateParticipation({
           id: editedParticipation._id,
           data: {
             answers: editedParticipation.answers,
-            totalScore: editedParticipation.totalScore,
+            obtainedMarks: editedParticipation.obtainedMarks,
             status: editedParticipation.status,
           },
         })
@@ -171,8 +168,7 @@ const ParticipantAnalytics = () => {
       setReviewOpen(false);
       setEditedParticipation(null);
     } catch (e) {
-      const msg = e?.message || "Failed to update marks";
-      toast.error(msg);
+      toast.error(e?.message || "Failed to update marks");
     } finally {
       setIsSaving(false);
     }
@@ -180,28 +176,17 @@ const ParticipantAnalytics = () => {
 
   const handleExportCSV = () => {
     const rows = filteredParticipations.map((p) => {
-      const student =
-        typeof p.studentId === "string"
-          ? { id: p.studentId, name: "Unknown", contact: "" }
-          : {
-              id: p.studentId._id,
-              name:
-                p.studentId.fullNameEnglish ||
-                p.studentId.fullNameBangla ||
-                "Unknown",
-              contact: p.studentId.contact || "",
-            };
-      const pid = typeof p.quizId === "string" ? p.quizId : p.quizId?._id;
-      const quiz = quizzes.find((q) => q._id === pid);
-      const totalMarks = quiz?.totalMarks || 0;
-      const reward = computeRewardPoints(p.totalScore, totalMarks);
+      const user = p.user || {};
+      const quiz = p.quiz || {};
+      const totalMarks = quiz.totalMarks || 0;
+      const reward = computeRewardPoints(p.obtainedMarks, totalMarks);
       return {
-        "Student ID": student.id,
-        "Student Name": student.name,
-        Contact: student.contact,
-        Quiz: quiz?.title || "Unknown",
+        "Student Name":
+          user.fullNameEnglish || user.fullNameBangla || "Unknown",
+        Contact: user.contact || "",
+        Quiz: quiz.title || "Unknown",
         "Total Marks": totalMarks,
-        Score: p.totalScore,
+        "Obtained Marks": p.obtainedMarks,
         Status: p.status,
         Reward: reward,
         Submitted: new Date(p.createdAt).toLocaleString(),
@@ -229,10 +214,10 @@ const ParticipantAnalytics = () => {
 
   const handleRefresh = () => {
     if (selectedQuizId) {
-      typedDispatch(getParticipationsByQuiz(selectedQuizId));
-      typedDispatch(fetchQuestionsByQuizId(selectedQuizId));
+      dispatch(getParticipationsByQuiz(selectedQuizId));
+      dispatch(fetchQuestionsByQuizId(selectedQuizId));
     } else {
-      typedDispatch(fetchParticipations());
+      dispatch(fetchParticipations());
     }
   };
 
@@ -240,6 +225,7 @@ const ParticipantAnalytics = () => {
 
   return (
     <div className="container mx-auto py-6">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Participant Analytics</h1>
         <div className="flex items-center space-x-2">
@@ -252,6 +238,7 @@ const ParticipantAnalytics = () => {
         </div>
       </div>
 
+      {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div>
           <Label>Filter by Quiz</Label>
@@ -283,8 +270,8 @@ const ParticipantAnalytics = () => {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="failed">Failed</SelectItem>
-              <SelectItem value="pending">Under Review</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -298,6 +285,7 @@ const ParticipantAnalytics = () => {
         </div>
       </div>
 
+      {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center h-40">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -316,7 +304,7 @@ const ParticipantAnalytics = () => {
               <TableRow>
                 <TableHead>Student</TableHead>
                 <TableHead>Quiz</TableHead>
-                <TableHead>Score</TableHead>
+                <TableHead>Marks</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Reward</TableHead>
                 <TableHead>Submitted</TableHead>
@@ -325,53 +313,26 @@ const ParticipantAnalytics = () => {
             </TableHeader>
             <TableBody>
               {filteredParticipations.map((p) => {
-                const student =
-                  typeof p.studentId === "string"
-                    ? { name: "Unknown", contact: "" }
-                    : {
-                        name:
-                          p.studentId.fullNameEnglish ||
-                          p.studentId.fullNameBangla ||
-                          "Unknown",
-                        contact: p.studentId.contact || "",
-                      };
-                const pQuizId =
-                  typeof p.quizId === "string" ? p.quizId : p.quizId?._id;
-                const quiz = quizzes.find((q) => q._id === pQuizId);
-                const passingMarks = quiz?.passingMarks || 0;
-                const isRowForSelectedQuiz = selectedQuizId
-                  ? pQuizId === selectedQuizId
-                  : false;
-                const marksFromQuestions = isRowForSelectedQuiz
-                  ? (questions || []).reduce((sum, q) => {
-                      const qQuizId =
-                        typeof q.quizId === "string" ? q.quizId : q.quizId?._id;
-                      return qQuizId === pQuizId ? sum + (q.marks || 0) : sum;
-                    }, 0)
-                  : 0;
-                const totalAvailable =
-                  marksFromQuestions && marksFromQuestions > 0
-                    ? marksFromQuestions
-                    : quiz?.totalMarks || 0;
-                const reward = computeRewardPoints(
-                  p.totalScore,
-                  totalAvailable
-                );
-                const passed = p.totalScore >= (quiz?.passingMarks || 0);
+                const user = p.user || {};
+                const quiz = p.quiz || {};
+                const totalMarks = quiz.totalMarks || 0;
+                const reward = computeRewardPoints(p.obtainedMarks, totalMarks);
+                const passed = p.obtainedMarks >= (quiz.passingMarks || 0);
                 return (
                   <TableRow key={p._id}>
                     <TableCell>
-                      <div className="font-medium">{student.name}</div>
+                      <div className="font-medium">
+                        {user.fullNameEnglish ||
+                          user.fullNameBangla ||
+                          "Unknown"}
+                      </div>
                       <div className="text-xs text-gray-500">
-                        {student.contact}
+                        {user.contact}
                       </div>
                     </TableCell>
-                    <TableCell>{quiz?.title || "Unknown"}</TableCell>
+                    <TableCell>{quiz.title || "Unknown"}</TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{p.totalScore}</span>/{" "}
-                        {passingMarks}
-                      </div>
+                      {p.obtainedMarks} / {totalMarks}
                     </TableCell>
                     <TableCell>
                       <Badge variant={passed ? "default" : "destructive"}>
@@ -386,7 +347,15 @@ const ParticipantAnalytics = () => {
                     <TableCell>
                       {new Date(p.createdAt).toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openReview(p)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Review
+                      </Button>
                       <Link
                         href={`/admin/participant-analytics/${p._id}`}
                         className="inline-flex items-center px-3 py-1.5 border rounded-md text-sm"
@@ -402,57 +371,58 @@ const ParticipantAnalytics = () => {
         </div>
       )}
 
-      {/* Review & Custom Marking Dialog */}
+      {/* Review Modal */}
       <Dialog open={reviewOpen} onOpenChange={() => setReviewOpen(false)}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Review Answers & Custom Marking</DialogTitle>
+            <DialogTitle>Review & Custom Marking</DialogTitle>
             <DialogDescription>
-              Adjust marks and correctness. Status and total will auto-update.
+              Adjust marks and correctness. Total and status will auto-update.
             </DialogDescription>
           </DialogHeader>
 
           {editedParticipation && (
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+              {/* Top Info */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg">
                 <div>
                   <Label className="text-xs text-gray-500">Student</Label>
                   <div className="text-sm font-medium">
-                    {typeof editedParticipation.studentId === "string"
-                      ? editedParticipation.studentId
-                      : editedParticipation.studentId.fullNameEnglish ||
-                        editedParticipation.studentId.fullNameBangla ||
-                        "Unknown"}
+                    {editedParticipation.user?.fullNameEnglish ||
+                      editedParticipation.user?.fullNameBangla ||
+                      "Unknown"}
                   </div>
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Quiz</Label>
                   <div className="text-sm">
-                    {selectedQuiz?.title || "Unknown"}
+                    {editedParticipation.quiz?.title || "Unknown"}
                   </div>
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Total Score</Label>
                   <div className="text-sm font-semibold">
-                    {editedParticipation.totalScore} /{" "}
-                    {selectedQuiz?.totalMarks || 0}
+                    {editedParticipation.obtainedMarks} /{" "}
+                    {editedParticipation.quiz?.totalMarks || 0}
                   </div>
                 </div>
               </div>
 
+              {/* Questions */}
               {editedParticipation.answers.map((ans, idx) => (
                 <div key={idx} className="border rounded-lg p-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="text-xs text-gray-500 mb-1">Question</div>
                       <div className="text-sm font-medium">
-                        {getQuestionText(ans.questionId)}
+                        {ans.question?.text || "—"}
                       </div>
+
                       <div className="text-xs text-gray-500 mt-2">
                         Selected Answer
                       </div>
                       <div className="text-sm bg-gray-50 p-2 rounded">
-                        {ans.selectedOption || "—"}
+                        {ans.answer || "—"}
                       </div>
                     </div>
                     <div className="w-64">

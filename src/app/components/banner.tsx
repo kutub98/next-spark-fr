@@ -42,13 +42,13 @@ export default function Banner() {
 
   // Fetch banner data
   useEffect(() => {
+    let ignore = false;
+
     const fetchBanners = async () => {
       try {
-        const res = await fetch(
-          `${api}/banner`
-        );
+        const res = await fetch(`${api}/banner`);
         const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
+        if (!ignore && json.success && Array.isArray(json.data)) {
           const approvedBanners = json.data.filter(
             (item: BannerItem) => item.status === "approved"
           );
@@ -60,6 +60,9 @@ export default function Banner() {
     };
 
     fetchBanners();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   // Auto slide every 5 seconds

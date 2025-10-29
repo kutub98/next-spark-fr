@@ -96,18 +96,20 @@ const StudentQuizTaking = () => {
     const isCorrect =
       question.questionType === "MCQ"
         ? answer === question.correctAnswer
-        : false; // For Short and Written, admin will evaluate
+        : false;
 
     const marksObtained = isCorrect ? question.marks : 0;
 
-    setAnswers((prev) => ({
+    const newAnswer: IAnswer = {
+      question: question._id, // <-- use `question` instead of `questionId`
+      selectedOption: answer,
+      isCorrect,
+      marksObtained,
+    };
+
+    setAnswers((prev: Record<string, IAnswer>) => ({
       ...prev,
-      [questionId]: {
-        questionId,
-        selectedOption: answer,
-        isCorrect,
-        marksObtained,
-      },
+      [question._id]: newAnswer, // use question._id as the key
     }));
   };
 

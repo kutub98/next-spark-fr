@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -50,6 +51,9 @@ const ParticipationDetailPage = () => {
     (s: RootState) => s.questions
   );
 
+  console.log(participations, "participations");
+  console.log(questions, "questions");
+
   const [isSaving, setIsSaving] = useState(false);
   const fileBaseUrl = useMemo(() => api.replace(/\/api\/v1$/, ""), []);
 
@@ -61,19 +65,27 @@ const ParticipationDetailPage = () => {
     [participations, params.participationId]
   );
 
+  // ✅ Fetch participation details
   useEffect(() => {
     if (params.participationId) {
       dispatch(getParticipationById(params.participationId as string));
     }
   }, [dispatch, params.participationId]);
 
+  // ✅ FIX: Use "quiz" instead of "quizId"
   useEffect(() => {
     if (!participation) return;
-    type ParticipationMaybePopulated = Omit<IParticipation, "quizId"> & {
-      quizId: string | { _id: string };
-    };
-    const p = participation as ParticipationMaybePopulated;
-    const quizId = typeof p.quizId === "string" ? p.quizId : p.quizId._id;
+
+    const rawQuiz = (participation as any).quiz;
+    if (!rawQuiz) return;
+
+    const quizId =
+      typeof rawQuiz === "string"
+        ? rawQuiz
+        : typeof rawQuiz === "object" && rawQuiz._id
+        ? rawQuiz._id
+        : null;
+
     if (quizId) {
       dispatch(fetchQuestionsByQuizId(quizId));
     }
@@ -86,26 +98,22 @@ const ParticipationDetailPage = () => {
     }
   }, [participation]);
 
+  // ✅ Quiz title reference
   const getQuizTitle = () => {
     if (!editable) return "Unknown";
-    const q = editable.quizId as unknown as string | { title?: string };
+    const q = (editable as any).quiz;
     return typeof q === "string" ? q : q?.title || "Unknown";
   };
 
-  const getQuestionText = (questionId: string) => {
-    const q = questions.find((qq: IQuestion) => qq._id === questionId);
-    return q?.text || "—";
-  };
+  // ✅ Updated helper functions (use `question`)
+  const getQuestionText = (question: string) =>
+    questions.find((q: IQuestion) => q._id === question)?.text || "—";
 
-  const getQuestionType = (questionId: string) => {
-    const q = questions.find((qq: IQuestion) => qq._id === questionId);
-    return q?.questionType || "";
-  };
+  const getQuestionType = (question: string) =>
+    questions.find((q: IQuestion) => q._id === question)?.questionType || "";
 
-  const getQuestionMarks = (questionId: string) => {
-    const q = questions.find((qq: IQuestion) => qq._id === questionId);
-    return q?.marks ?? 0;
-  };
+  const getQuestionMarks = (question: string) =>
+    questions.find((q: IQuestion) => q._id === question)?.marks ?? 0;
 
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
@@ -118,8 +126,7 @@ const ParticipationDetailPage = () => {
   const currentQuestion = useMemo(() => {
     if (!currentAnswer) return null;
     return (
-      questions.find((q: IQuestion) => q._id === currentAnswer.questionId) ||
-      null
+      questions.find((q: IQuestion) => q._id === currentAnswer.question) || null
     );
   }, [currentAnswer, questions]);
 
@@ -133,20 +140,15 @@ const ParticipationDetailPage = () => {
     setReviewIndex(null);
   };
 
-  const goPrev = () => {
-    setReviewIndex((prev) => {
-      if (prev === null) return prev;
-      return prev > 0 ? prev - 1 : prev;
-    });
-  };
+  const goPrev = () =>
+    setReviewIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
 
-  const goNext = () => {
+  const goNext = () =>
     setReviewIndex((prev) => {
       if (prev === null) return prev;
-      const lastIndex = (editable?.answers?.length || 1) - 1;
-      return prev < lastIndex ? prev + 1 : prev;
+      const last = (editable?.answers?.length || 1) - 1;
+      return prev < last ? prev + 1 : prev;
     });
-  };
 
   const updateAnswerField = (
     index: number,
@@ -157,12 +159,14 @@ const ParticipationDetailPage = () => {
     const updated = { ...editable };
     const answers = [...updated.answers];
     const current = { ...answers[index] };
+
     if (field === "marksObtained") {
       const val = Number(value);
       current.marksObtained = Number.isFinite(val) && val >= 0 ? val : 0;
     } else if (field === "isCorrect") {
       current.isCorrect = Boolean(value);
     }
+
     answers[index] = current;
     updated.answers = answers;
     updated.totalScore = answers.reduce(
@@ -185,10 +189,9 @@ const ParticipationDetailPage = () => {
           },
         })
       ).unwrap();
-      toast.success("Participation updated");
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to update";
-      toast.error(message);
+      toast.success("Participation updated successfully");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to update participation");
     } finally {
       setIsSaving(false);
     }
@@ -205,11 +208,10 @@ const ParticipationDetailPage = () => {
           </Button>
           <h1 className="text-2xl font-bold">Participation Details</h1>
         </div>
-        <div>
-          <Button onClick={handleSave} disabled={isSaving || loading}>
-            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save
-          </Button>
-        </div>
+        <Button onClick={handleSave} disabled={isSaving || loading}>
+          {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          Save
+        </Button>
       </div>
 
       {loading ? (
@@ -222,11 +224,9 @@ const ParticipationDetailPage = () => {
             <div>
               <Label className="text-xs text-gray-500">Student</Label>
               <div className="text-sm font-medium">
-                {typeof editable.studentId === "string"
-                  ? editable.studentId
-                  : editable.studentId.fullNameEnglish ||
-                    editable.studentId.fullNameBangla ||
-                    "Unknown"}
+                {(editable as any)?.user?.fullNameEnglish ||
+                  (editable as any)?.user?.fullNameBangla ||
+                  "Unknown"}
               </div>
             </div>
             <div>
@@ -253,7 +253,7 @@ const ParticipationDetailPage = () => {
               </TableHeader>
               <TableBody>
                 {editable.answers.map((ans, idx: number) => {
-                  const qType = getQuestionType(ans.questionId);
+                  const qType = getQuestionType(ans.question);
                   const displayText = (ans.participantAnswer ||
                     ans.selectedOption ||
                     "") as string;
@@ -265,7 +265,7 @@ const ParticipationDetailPage = () => {
                     <TableRow key={idx}>
                       <TableCell className="max-w-md">
                         <div className="text-sm">
-                          {getQuestionText(ans.questionId)}
+                          {getQuestionText(ans.question)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -289,7 +289,6 @@ const ParticipationDetailPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {/* Participant images if backend stores them under participantImages */}
                         {Array.isArray(ans.participantImages) &&
                         ans.participantImages.length > 0 ? (
                           <div className="flex gap-2 flex-wrap">
@@ -303,7 +302,6 @@ const ParticipationDetailPage = () => {
                                   className="h-12 w-12 border rounded overflow-hidden"
                                   title={`image-${i + 1}`}
                                 >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={`${fileBaseUrl}${img}`}
                                     alt="img"
@@ -320,7 +318,7 @@ const ParticipationDetailPage = () => {
                       <TableCell>
                         <Badge variant="outline">
                           {ans.marksObtained ?? 0} /{" "}
-                          {getQuestionMarks(ans.questionId)}
+                          {getQuestionMarks(ans.question)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -379,7 +377,7 @@ const ParticipationDetailPage = () => {
                           Question
                         </Label>
                         <div className="text-sm font-medium max-w-2xl">
-                          {getQuestionText(currentAnswer.questionId)}
+                          {getQuestionText(currentAnswer.question)}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -433,7 +431,6 @@ const ParticipationDetailPage = () => {
                                 className="h-16 w-16 border rounded overflow-hidden"
                                 title={`image-${i + 1}`}
                               >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={`${fileBaseUrl}${img}`}
                                   alt="img"
@@ -472,12 +469,10 @@ const ParticipationDetailPage = () => {
                       <Input
                         type="number"
                         min="0"
-                        max={getQuestionMarks(currentAnswer.questionId)}
+                        max={getQuestionMarks(currentAnswer.question)}
                         value={currentAnswer.marksObtained}
                         onChange={(e) => {
-                          const max = getQuestionMarks(
-                            currentAnswer.questionId
-                          );
+                          const max = getQuestionMarks(currentAnswer.question);
                           let val = Number(e.target.value);
                           if (!Number.isFinite(val)) val = 0;
                           val = Math.max(0, Math.min(val, max));
@@ -499,7 +494,7 @@ const ParticipationDetailPage = () => {
                           updateAnswerField(
                             reviewIndex as number,
                             "marksObtained",
-                            getQuestionMarks(currentAnswer.questionId)
+                            getQuestionMarks(currentAnswer.question)
                           )
                         }
                       >

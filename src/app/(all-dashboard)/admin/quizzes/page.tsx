@@ -1037,7 +1037,7 @@ const AdminQuizManagement = () => {
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {selectedParticipation.answers.map((answer, index) => {
                     const question = questions.find(
-                      (q) => q._id === answer.questionId
+                      (q) => q._id === answer.question
                     );
                     return (
                       <div key={index} className="border rounded-lg p-4">

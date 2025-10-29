@@ -63,7 +63,7 @@ const ParticipationReview: React.FC<ParticipationReviewProps> = ({
     // Initialize edited answers with current answers
     const answersMap: Record<string, IAnswer> = {};
     participation.answers.forEach((answer) => {
-      answersMap[answer.questionId] = { ...answer };
+      answersMap[answer.question] = { ...answer };
     });
     setEditedAnswers(answersMap);
   }, [participation]);

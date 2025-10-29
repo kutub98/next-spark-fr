@@ -105,7 +105,7 @@ const quizReducer = (state: QuizState, action: QuizAction): QuizState => {
       return {
         ...state,
         answers: state.answers.map((answer) =>
-          answer.questionId === action.payload.questionId
+          answer.question === action.payload.questionId
             ? {
                 ...answer,
                 selectedOption: action.payload.selectedOption,
@@ -268,7 +268,7 @@ export default function ParticipateQuiz({
     try {
       const created = await dispatch(
         createParticipation({
-          userId: userId!,
+          studentId: userId!,
           quizId,
           answers,
           totalScore,
@@ -281,18 +281,18 @@ export default function ParticipateQuiz({
         const uploads: Promise<Response>[] = [];
         answers.forEach((ans) => {
           const q = quizQuestions.find(
-            (qq: IQuestion) => qq._id === ans.questionId
+            (qq: IQuestion) => qq._id === ans.question
           );
           if (!q) return;
           if (
             (q.questionType === "Short" || q.questionType === "Written") &&
-            answerImages[ans.questionId]?.length
+            answerImages[ans.question]?.length
           ) {
             const form = new FormData();
-            answerImages[ans.questionId].forEach((file) =>
+            answerImages[ans.question].forEach((file) =>
               form.append("images", file)
             );
-            form.append("questionId", ans.questionId);
+            form.append("questionId", ans.question);
             form.append("selectedOption", ans.selectedOption || "");
             form.append("participantAnswer", ans.selectedOption || "");
             form.append("isCorrect", String(ans.isCorrect ?? false));
@@ -433,63 +433,45 @@ export default function ParticipateQuiz({
   };
 
   const startQuiz = async () => {
-    // ✅ Check authentication first
-    if (!currentUser || !currentUser._id) {
-      toast.error("User not found. Please login first.");
-      router.push("/auth");
-      return;
-    }
-
-    // ✅ Ensure event ID exists (if event-based quiz)
-    if (!eventId) {
-      toast.error("Event information missing. Please try again later.");
-      return;
-    }
-
-    // ✅ Prepare initial answers
     let initialAnswers: IAnswer[] = [];
     try {
       if (quizQuestions && quizQuestions.length > 0) {
         initialAnswers = quizQuestions.map((question) => ({
-          questionId: question._id,
+          question: question._id, // ✅ use `question` not `questionId`
           selectedOption: "",
           isCorrect: false,
           marksObtained: 0,
-          eventId: eventId,
+          participantAnswer: "", // optional, can be empty
+          participantImages: [], // optional
         }));
       } else {
-        toast.error("No questions found in this quiz.");
-        return;
+        initialAnswers = [];
       }
     } catch (error) {
       console.error("Failed to initialize answers:", error);
-      toast.error(
-        "Failed to prepare quiz answers. Please refresh and try again."
-      );
-      return;
+      initialAnswers = [];
     }
 
-    // ✅ Register participant before starting
-    try {
-      await dispatch(
-        addParticipant({
-          eventId: eventId,
-          userId: currentUser._id, // ✅ Must be userId (NOT studentId)
-        })
-      ).unwrap();
-    } catch (error: unknown) {
-      console.warn("Add participant error:", error);
-      toast.warning("Unable to register you as a participant, continuing...");
+    if (eventId && currentUser?._id) {
+      try {
+        await dispatch(
+          addParticipant({
+            eventId,
+            userId: currentUser._id,
+          })
+        ).unwrap();
+      } catch (error: unknown) {
+        console.log("Add participant error:", error);
+        console.log("Continuing with quiz regardless of participant status");
+      }
     }
 
-    // ✅ Start quiz
     dispatchQuiz({
       type: "START_QUIZ",
       payload: { answers: initialAnswers },
     });
-
-    toast.success("Quiz started. Good luck!");
   };
+
 
   const handleAnswerChange = (questionId: string, selectedOption: string) => {
     const question = quizQuestions.find((q: IQuestion) => q._id === questionId);
@@ -851,7 +833,7 @@ export default function ParticipateQuiz({
                     <RadioGroup
                       value={
                         answers.find(
-                          (a) => a.questionId === currentQuestion?._id
+                          (a) => a.question === currentQuestion?._id
                         )?.selectedOption || ""
                       }
                       onValueChange={(value) =>
@@ -899,7 +881,7 @@ export default function ParticipateQuiz({
                         }
                         value={
                           answers.find(
-                            (a) => a.questionId === currentQuestion?._id
+                            (a) => a.question === currentQuestion?._id
                           )?.selectedOption || ""
                         }
                         className="resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl p-2 sm:p-3 w-full"
@@ -992,7 +974,7 @@ export default function ParticipateQuiz({
                       disabled={isSubmitting}
                       className="bg-primary hover:bg-primary/80 text-white"
                     >
-                      {isSubmitting ? "Submitting..." : "Submit Quiz asdfas"}
+                      {isSubmitting ? "Submitting..." : "Submit Quiz"}
                     </Button>
                   ) : (
                     <Button
