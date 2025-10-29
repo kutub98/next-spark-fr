@@ -28,9 +28,16 @@ import RewardPoints from "@/components/ui/reward-points";
 
 const StudentDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { participations } = useSelector(
+
+  const { participations, loading } = useSelector(
     (state: RootState) => state.participations
   );
+
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+  } = useSelector((state: RootState) => state.auth);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -39,13 +46,15 @@ const StudentDashboard = () => {
     try {
       await dispatch(fetchParticipations());
     } catch {
-      toast.error("Failed to load data");
+      toast.error("Failed to load participation data");
     }
   }, [dispatch]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (isAuthenticated && !authLoading) {
+      loadData();
+    }
+  }, [loadData, isAuthenticated, authLoading]);
 
   // ✅ Badge based on status
   const getParticipationBadge = (status: string) => {
@@ -63,8 +72,13 @@ const StudentDashboard = () => {
     }
   };
 
+  // ✅ Filter only the logged-in user's participations
+  const userParticipations = participations.filter(
+    (p) => p.user?._id === user?._id
+  );
+
   // ✅ Filtering based on search + status
-  const filteredParticipations = participations.filter((p) => {
+  const filteredParticipations = userParticipations.filter((p) => {
     const quizTitle = p.quiz?.title || "";
     const matchesSearch =
       searchTerm === "" ||
@@ -111,19 +125,19 @@ const StudentDashboard = () => {
       </div>
 
       {/* Participations Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {filteredParticipations.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">
-              কোনো কুইজ ফলাফল পাওয়া যায়নি
-            </h3>
-            <p className="text-gray-500">
-              আপনি এখনও কোনো কুইজে অংশগ্রহণ করেননি।
-            </p>
-          </div>
-        ) : (
-          filteredParticipations.map((p) => (
+      {loading ? (
+        <div className="text-center py-12 text-gray-500">লোড হচ্ছে...</div>
+      ) : filteredParticipations.length === 0 ? (
+        <div className="text-center py-12">
+          <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">
+            কোনো কুইজ ফলাফল পাওয়া যায়নি
+          </h3>
+          <p className="text-gray-500">আপনি এখনও কোনো কুইজে অংশগ্রহণ করেননি।</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {filteredParticipations.map((p) => (
             <Card key={p._id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -163,9 +177,9 @@ const StudentDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -36,6 +36,7 @@ export interface IQuiz {
 }
 
 export interface IParticipation {
+
   _id: string;
   quiz?: IQuiz;
   studentId: string | IStudent;
@@ -47,9 +48,15 @@ export interface IParticipation {
   status: "completed" | "failed" | "pending";
   createdAt: string;
   updatedAt: string;
+  user?: {
+    _id: string
+  }
 }
 
 export interface ParticipationState {
+  user?: {
+    _id: string
+  },
   participations: IParticipation[];
   loading: boolean;
   error: string | null;
