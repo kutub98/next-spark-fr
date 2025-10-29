@@ -472,7 +472,6 @@ export default function ParticipateQuiz({
     });
   };
 
-
   const handleAnswerChange = (questionId: string, selectedOption: string) => {
     const question = quizQuestions.find((q: IQuestion) => q._id === questionId);
     if (!question) return;
@@ -832,9 +831,8 @@ export default function ParticipateQuiz({
                   {currentQuestion?.questionType === "MCQ" ? (
                     <RadioGroup
                       value={
-                        answers.find(
-                          (a) => a.question === currentQuestion?._id
-                        )?.selectedOption || ""
+                        answers.find((a) => a.question === currentQuestion?._id)
+                          ?.selectedOption || ""
                       }
                       onValueChange={(value) =>
                         handleAnswerChange(currentQuestion?._id || "", value)

@@ -84,17 +84,28 @@ export const createParticipation = createAsyncThunk<
   }
 >("participations/create", async (participationData) => {
   const token = localStorage.getItem("token");
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
+  if (!token) throw new Error("No authentication token found");
 
-  const res = await axios.post(`${api}/participations`, participationData, {
+  // ✅ Map `question` to `questionId` only for backend
+  const formattedData = {
+    ...participationData,
+    answers: participationData.answers.map((a) => ({
+      questionId: a.question, // backend expects this
+      selectedOption: a.selectedOption,
+      isCorrect: a.isCorrect,
+      marksObtained: a.marksObtained,
+      participantAnswer: a.participantAnswer || "",
+      participantImages: a.participantImages || [],
+    })),
+  };
+
+  const res = await axios.post(`${api}/participations`, formattedData, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
-  console.log(res, "created participation");
 
+  console.log("✅ Created participation:", res.data);
   return res.data.data as IParticipation;
 });
 
