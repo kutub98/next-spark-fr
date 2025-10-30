@@ -168,7 +168,7 @@ const StudentDashboard = () => {
                     </span>
                   </div>
                   <div className="pt-2">
-                    <Link href={`/student/result/${p._id}`}>
+                    <Link href={`/student/results/${p._id}`}>
                       <Button size="sm" className="w-full">
                         বিস্তারিত ফলাফল দেখুন
                       </Button>

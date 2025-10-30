@@ -242,8 +242,8 @@ const StudentResults = () => {
                   </div>
                   <div className="pt-2">
                     <Link
-                      href={`/student/result/${
-                        typeof p.quiz === "object" ? p.quiz._id : p.quiz
+                      href={`/student/results/${
+                        typeof p.quiz === "object" ? p._id : p._id
                       }`}
                     >
                       <Button size="sm" className="w-full">

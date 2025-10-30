@@ -36,10 +36,8 @@ import Image from "next/image";
 const StudentResultView = () => {
   const dispatch = useDispatch<AppDispatch>();
   const params = useParams();
-  console.log(params, "params");
   const router = useRouter();
-  const participationId = params.quizId as string;
-  console.log(participationId, "participationId");
+  const participationId = params.quizid as string;
 
   const { selectedQuiz, loading: quizLoading } = useSelector(
     (state: RootState) => state.quizzes
@@ -55,20 +53,16 @@ const StudentResultView = () => {
   const [participation, setParticipation] = useState<IParticipation | null>(
     null
   );
-
   const [loading, setLoading] = useState(false);
 
   const loadResultData = useCallback(async () => {
     try {
       setLoading(true);
-
-      // ✅ Step 1: Get participation by ID
       const participationData = await dispatch(
         getParticipationById(participationId)
       ).unwrap();
       setParticipation(participationData);
 
-      // ✅ Step 2: Load quiz & questions using the quiz ID from participation
       if (participationData?.quiz?._id) {
         await Promise.all([
           dispatch(getQuizById(participationData.quiz._id)),
@@ -84,32 +78,29 @@ const StudentResultView = () => {
   }, [dispatch, participationId]);
 
   useEffect(() => {
-    if (participationId) {
-      loadResultData();
-    }
+    if (participationId) loadResultData();
   }, [participationId, loadResultData]);
 
   const getStatusBadge = (status: string) => {
+    const baseClass =
+      "flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium";
     switch (status) {
       case "completed":
         return (
-          <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
-            <CheckCircle className="h-3 w-3" />
-            Completed
+          <Badge className={`${baseClass} bg-green-100 text-green-800`}>
+            <CheckCircle className="h-4 w-4" /> Completed
           </Badge>
         );
       case "failed":
         return (
-          <Badge className="bg-red-100 text-red-800 flex items-center gap-1">
-            <XCircle className="h-3 w-3" />
-            Failed
+          <Badge className={`${baseClass} bg-red-100 text-red-800`}>
+            <XCircle className="h-4 w-4" /> Failed
           </Badge>
         );
       case "pending":
         return (
-          <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Under Review
+          <Badge className={`${baseClass} bg-yellow-100 text-yellow-800`}>
+            <Clock className="h-4 w-4" /> Under Review
           </Badge>
         );
       default:
@@ -164,20 +155,17 @@ const StudentResultView = () => {
     return 20;
   };
 
-  if (loading || quizLoading || questionsLoading || participationLoading) {
+  if (loading || quizLoading || questionsLoading || participationLoading)
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+      <div className="container mx-auto py-8 flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
 
-  if (!selectedQuiz || !participation) {
+  if (!selectedQuiz || !participation)
     return (
       <div className="container mx-auto py-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
           Result Not Found
         </h1>
         <p className="text-gray-600 mb-6">
@@ -189,7 +177,6 @@ const StudentResultView = () => {
         </Button>
       </div>
     );
-  }
 
   const performance = getPerformanceLevel(
     participation.totalScore,
@@ -201,21 +188,21 @@ const StudentResultView = () => {
     selectedQuiz.totalMarks
   );
 
-  const percentage =
-    selectedQuiz.totalMarks && selectedQuiz.totalMarks > 0
-      ? (participation.totalScore / selectedQuiz.totalMarks) * 100
-      : 0;
-
-  const hasPassed =
-    participation.totalScore >= (selectedQuiz.passingMarks ?? 0);
+  const totalScore = participation.answers.reduce(
+    (acc, answer) => acc + (answer.marksObtained ?? 0),
+    0
+  );
+  const totalMarks = selectedQuiz?.totalMarks ?? 1;
+  const percentage = totalMarks > 0 ? (totalScore / totalMarks) * 100 : 0;
+  const hasPassed = totalScore >= (selectedQuiz?.passingMarks ?? 0);
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 space-y-8">
       {/* Result Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-1">
               Quiz Result
             </h1>
             <p className="text-gray-600 text-lg">{selectedQuiz.title}</p>
@@ -223,9 +210,9 @@ const StudentResultView = () => {
           {getStatusBadge(participation.status)}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="flex items-center text-gray-600">
-            <Calendar className="h-5 w-5 mr-2" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 text-gray-700">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-500" />
             <div>
               <p className="text-sm font-medium">Submitted</p>
               <p className="text-sm">
@@ -233,22 +220,22 @@ const StudentResultView = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center text-gray-600">
-            <Clock className="h-5 w-5 mr-2" />
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-orange-500" />
             <div>
               <p className="text-sm font-medium">Duration</p>
               <p className="text-sm">{selectedQuiz.duration} minutes</p>
             </div>
           </div>
-          <div className="flex items-center text-gray-600">
-            <BookOpen className="h-5 w-5 mr-2" />
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-green-500" />
             <div>
               <p className="text-sm font-medium">Questions</p>
               <p className="text-sm">{questions.length}</p>
             </div>
           </div>
-          <div className="flex items-center text-gray-600">
-            <User className="h-5 w-5 mr-2" />
+          <div className="flex items-center gap-2">
+            <User className="h-5 w-5 text-purple-500" />
             <div>
               <p className="text-sm font-medium">Student</p>
               <p className="text-sm">
@@ -260,25 +247,28 @@ const StudentResultView = () => {
       </div>
 
       {/* Score Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        <Card className="hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              {participation.totalScore} / {selectedQuiz.totalMarks}
+            <CardTitle className="text-2xl font-bold">
+              {totalScore} / {totalMarks}
             </CardTitle>
             <CardDescription>Total Score</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <Progress value={percentage} className="h-3 mb-2" />
+              <Progress
+                value={percentage}
+                className="h-3 mb-2 rounded-full bg-gray-200"
+              />
               <p className="text-sm text-gray-600">{percentage.toFixed(1)}%</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900">
+            <CardTitle className="text-2xl font-bold">
               {selectedQuiz.passingMarks}
             </CardTitle>
             <CardDescription>Passing Marks</CardDescription>
@@ -286,7 +276,7 @@ const StudentResultView = () => {
           <CardContent>
             <div className="text-center">
               <div
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${performance.bgColor} ${performance.color}`}
+                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${performance.bgColor} ${performance.color} transition-transform transform hover:scale-105`}
               >
                 {hasPassed ? (
                   <CheckCircle className="h-4 w-4 mr-1" />
@@ -299,135 +289,126 @@ const StudentResultView = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-xl transition-shadow duration-300">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-yellow-600 flex items-center justify-center">
-              <Star className="h-6 w-6 mr-1" />
-              {rewardPoints}
+            <CardTitle className="text-2xl font-bold flex items-center justify-center text-yellow-600">
+              <Star className="h-6 w-6 mr-1" /> {rewardPoints}
             </CardTitle>
             <CardDescription>Reward Points</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                <Award className="h-4 w-4 mr-1" />
-                {performance.level}
+              <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 transition-transform transform hover:scale-105">
+                <Award className="h-4 w-4 mr-1" /> {performance.level}
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Detailed Results */}
-      <Card className="mb-8">
+      {/* Question-wise Results */}
+      <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
         <CardHeader>
           <CardTitle className="text-xl">Question-wise Results</CardTitle>
           <CardDescription>Detailed breakdown of your answers</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {questions.map((question, index) => {
-              const answer = participation.answers.find(
-                (a) => a.question === question._id
-              );
-              const isCorrect = answer?.isCorrect || false;
-              const marksObtained = answer?.marksObtained || 0;
+        <CardContent className="space-y-6">
+          {questions.map((question, index) => {
+            const answer = participation.answers.find(
+              (a) => a.question === question._id
+            );
+            const isCorrect = answer?.isCorrect || false;
+            const marksObtained = answer?.marksObtained || 0;
 
-              return (
-                <div key={question._id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 mb-2">
-                        Question {index + 1} ({question.questionType})
-                      </h4>
-                      <p className="text-gray-700 mb-3">{question.text}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline">{question.marks} marks</Badge>
-                      <Badge variant="outline">{question.difficulty}</Badge>
-                      <div
-                        className={`flex items-center px-2 py-1 rounded-full text-sm ${
-                          isCorrect
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {isCorrect ? (
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                        ) : (
-                          <XCircle className="h-3 w-3 mr-1" />
-                        )}
-                        {marksObtained} / {question.marks}
-                      </div>
-                    </div>
+            return (
+              <div
+                key={question._id}
+                className={`border rounded-lg p-4 transition-transform transform hover:scale-[1.02] hover:shadow-md`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 mb-2">
+                      Question {index + 1} ({question.questionType})
+                    </h4>
+                    <p className="text-gray-700 mb-3">{question.text}</p>
                   </div>
-
-                  {/* Question Image */}
-                  {question.uploadedImages &&
-                    question.uploadedImages.length > 0 && (
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        {question.uploadedImages.map((image, imgIndex) => (
-                          <Image
-                            key={imgIndex}
-                            src={`/api/images/${image.filename}`}
-                            alt={`Question image ${imgIndex + 1}`}
-                            width={200}
-                            height={128}
-                            className="w-full h-32 object-cover rounded border"
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                  {/* Answer Section */}
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">
-                        Your Answer:
-                      </p>
-                      <div className="bg-gray-50 p-3 rounded border">
-                        <p className="text-gray-900">
-                          {answer?.selectedOption || "No answer provided"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {question.questionType === "MCQ" &&
-                      question.correctAnswer && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-600 mb-1">
-                            Correct Answer:
-                          </p>
-                          <div className="bg-green-50 p-3 rounded border">
-                            <p className="text-green-900">
-                              {question.correctAnswer}
-                            </p>
-                          </div>
-                        </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline">{question.marks} marks</Badge>
+                    <Badge variant="outline">{question.difficulty}</Badge>
+                    <div
+                      className={`flex items-center px-2 py-1 rounded-full text-sm ${
+                        isCorrect
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {isCorrect ? (
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                      ) : (
+                        <XCircle className="h-3 w-3 mr-1" />
                       )}
-
-                    {question.explanation && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-600 mb-1">
-                          Explanation:
-                        </p>
-                        <div className="bg-blue-50 p-3 rounded border">
-                          <p className="text-blue-900">
-                            {question.explanation}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                      {marksObtained} / {question.marks}
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                {Array.isArray(question.uploadedImages) &&
+                  question.uploadedImages.length > 0 && (
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      {question.uploadedImages.map((image, idx) => (
+                        <Image
+                          key={idx}
+                          src={`/api/images/${image.filename}`}
+                          alt={`Question image ${idx + 1}`}
+                          width={200}
+                          height={128}
+                          className="w-full h-32 object-cover rounded border hover:scale-105 transition-transform"
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">
+                      Your Answer:
+                    </p>
+                    <div className="bg-gray-50 p-3 rounded border">
+                      {answer?.selectedOption || "No answer provided"}
+                    </div>
+                  </div>
+
+                  {question.questionType === "MCQ" &&
+                    question.correctAnswer && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 mb-1">
+                          Correct Answer:
+                        </p>
+                        <div className="bg-green-50 p-3 rounded border">
+                          {question.correctAnswer}
+                        </div>
+                      </div>
+                    )}
+
+                  {question.explanation && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        Explanation:
+                      </p>
+                      <div className="bg-blue-50 p-3 rounded border">
+                        {question.explanation}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
       {/* Performance Summary */}
-      <Card className="mb-8">
+      <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
         <CardHeader>
           <CardTitle className="text-xl">Performance Summary</CardTitle>
         </CardHeader>
@@ -457,7 +438,7 @@ const StudentResultView = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Score:</span>
                   <span className="font-medium">
-                    {participation.totalScore} / {selectedQuiz.totalMarks}
+                    {totalScore} / {totalMarks}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -490,16 +471,15 @@ const StudentResultView = () => {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <Button
           variant="outline"
           onClick={() => router.push("/student/dashboard")}
         >
           Back to Dashboard
         </Button>
-
         <div className="flex items-center space-x-2">
-          <Button onClick={() => window.print()} variant="outline">
+          <Button variant="outline" onClick={() => window.print()}>
             Print Result
           </Button>
           <Button
