@@ -38,8 +38,8 @@ const sidebarItems = {
     { label: "ড্যাশবোর্ড", href: "/student/dashboard", icon: LayoutDashboard },
     { label: "কুইজ", href: "/student/quiz", icon: BookOpen },
     { label: "ফলাফল", href: "/student/results", icon: Trophy },
-    { label: "প্রোফাইল", href: "/student/profile", icon: User },
     { label: "সার্টিফিকেট", href: "/student/certificate", icon: Award },
+    { label: "প্রোফাইল", href: "/student/profile", icon: User },
   ],
   admin: [
     { label: "ড্যাশবোর্ড", href: "/admin/dashboard", icon: LayoutDashboard },

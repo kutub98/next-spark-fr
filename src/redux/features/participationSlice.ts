@@ -10,6 +10,7 @@ export interface IAnswer {
   marksObtained: number;
   participantAnswer?: string;
   participantImages?: string[];
+  questionId?: string;
 }
 
 export interface IStudent {
@@ -81,6 +82,42 @@ export const fetchParticipations = createAsyncThunk<IParticipation[]>(
   }
 );
 
+// export const createParticipation = createAsyncThunk<
+//   IParticipation,
+//   {
+//     studentId: string;
+//     quizId: string;
+//     answers: IAnswer[];
+//     totalScore: number;
+//     status: "completed" | "failed" | "pending";
+//   }
+// >("participations/create", async (participationData) => {
+//   const token = localStorage.getItem("token");
+//   if (!token) throw new Error("No authentication token found");
+
+//   // ✅ Map `question` to `questionId` only for backend
+//   const formattedData = {
+//     ...participationData,
+//     answers: participationData.answers.map((a) => ({
+//       questionId: a.question, // backend expects this
+//       selectedOption: a.selectedOption,
+//       isCorrect: a.isCorrect,
+//       marksObtained: a.marksObtained,
+//       participantAnswer: a.participantAnswer || "",
+//       participantImages: a.participantImages || [],
+//     })),
+//   };
+
+//   const res = await axios.post(`${api}/participations`, formattedData, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+
+//   console.log("✅ Created participation:", res.data);
+//   return res.data.data as IParticipation;
+// });
+
 export const createParticipation = createAsyncThunk<
   IParticipation,
   {
@@ -94,17 +131,30 @@ export const createParticipation = createAsyncThunk<
   const token = localStorage.getItem("token");
   if (!token) throw new Error("No authentication token found");
 
-  // ✅ Map `question` to `questionId` only for backend
+  // ✅ Explicitly tell TS this is the shape we send to backend
   const formattedData = {
     ...participationData,
     answers: participationData.answers.map((a) => ({
-      questionId: a.question, // backend expects this
+      questionId: a.question, // OK now
       selectedOption: a.selectedOption,
       isCorrect: a.isCorrect,
       marksObtained: a.marksObtained,
       participantAnswer: a.participantAnswer || "",
       participantImages: a.participantImages || [],
     })),
+  } as {
+    studentId: string;
+    quizId: string;
+    answers: {
+      questionId: string;
+      selectedOption: string;
+      isCorrect: boolean;
+      marksObtained: number;
+      participantAnswer: string;
+      participantImages: string[];
+    }[];
+    totalScore: number;
+    status: "completed" | "failed" | "pending";
   };
 
   const res = await axios.post(`${api}/participations`, formattedData, {
@@ -113,11 +163,8 @@ export const createParticipation = createAsyncThunk<
     },
   });
 
-  console.log("✅ Created participation:", res.data);
   return res.data.data as IParticipation;
 });
-
-
 
 export const checkParticipation = createAsyncThunk(
   "participations/check",

@@ -212,8 +212,8 @@ const StudentResultView = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 text-gray-700">
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
-            <div>
+            <Calendar className="h-5 w-5  -mt-2 text-blue-500" />
+            <div className="">
               <p className="text-sm font-medium">Submitted</p>
               <p className="text-sm">
                 {new Date(participation.createdAt).toLocaleDateString()}
@@ -221,22 +221,22 @@ const StudentResultView = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-orange-500" />
-            <div>
+            <Clock className="h-5 w-5  -mt-2 text-orange-500" />
+            <div className="">
               <p className="text-sm font-medium">Duration</p>
               <p className="text-sm">{selectedQuiz.duration} minutes</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-green-500" />
-            <div>
+            <BookOpen className="h-5 w-5  -mt-2 text-green-500" />
+            <div className="">
               <p className="text-sm font-medium">Questions</p>
               <p className="text-sm">{questions.length}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-purple-500" />
-            <div>
+            <User className="h-5 w-5 -mt-2 text-purple-500" />
+            <div className="">
               <p className="text-sm font-medium">Student</p>
               <p className="text-sm">
                 {user?.fullNameEnglish || user?.fullNameBangla || "Unknown"}

@@ -206,43 +206,6 @@ export default function ParticipateQuiz({
   }, [isFetchingProfile, currentUser]);
 
   // Check if user has already participated in this quiz
-  // useEffect(() => {
-  //   const checkParticipationStatus = async () => {
-  //     if (isAuthenticated && currentUser && quizId) {
-  //       const userId = currentUser?._id;
-  //       if (userId) {
-  //         setIsCheckingParticipation(true);
-  //         try {
-  //           const result = await dispatch(
-  //             checkParticipation({ studentId: userId, quizId })
-  //           ).unwrap();
-
-  //           console.log(result, "result for paritcipated");
-
-  //           if (result.data?.hasParticipated) {
-  //             setHasParticipated(true);
-
-  //             setParticipationStatus(result.data?.status);
-  //           } else {
-  //             setHasParticipated(false);
-  //             setParticipationStatus(null);
-  //           }
-  //         } catch (error) {
-  //           console.error("Failed to check participation:", error);
-  //           setHasParticipated(false);
-  //           setParticipationStatus(null);
-  //         } finally {
-  //           setIsCheckingParticipation(false);
-  //         }
-  //       }
-  //     } else {
-  //       setHasParticipated(false);
-  //       setParticipationStatus(null);
-  //     }
-  //   };
-
-  //   checkParticipationStatus();
-  // }, [isAuthenticated, currentUser, quizId, dispatch]);
 
   useEffect(() => {
     const checkParticipationStatus = async () => {
@@ -292,12 +255,104 @@ export default function ParticipateQuiz({
     return answers.reduce((total, answer) => total + answer.marksObtained, 0);
   }, [answers]);
 
+  // const handleSubmitQuiz = useCallback(async () => {
+  //   if (isSubmitting) return;
+
+  //   const userId = currentUser?._id;
+
+  //   if (!currentUser || !currentUser._id) {
+  //     toast.error("User information not available. Please log in again.");
+  //     router.push("/auth");
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   const totalScore = calculateScore();
+
+  //   try {
+  //     const created = await dispatch(
+  //       createParticipation({
+  //         studentId: userId!,
+  //         quizId,
+  //         answers,
+  //         totalScore,
+  //         status: "pending",
+  //       })
+  //     ).unwrap();
+
+  //     if (created && created._id) {
+  //       const participationId = created._id as string;
+  //       const uploads: Promise<Response>[] = [];
+  //       answers.forEach((ans) => {
+  //         const q = quizQuestions.find(
+  //           (qq: IQuestion) => qq._id === ans.question
+  //         );
+  //         if (!q) return;
+  //         if (
+  //           (q.questionType === "Short" || q.questionType === "Written") &&
+  //           answerImages[ans.question]?.length
+  //         ) {
+  //           const form = new FormData();
+  //           answerImages[ans.question].forEach((file) =>
+  //             form.append("images", file)
+  //           );
+  //           form.append("questionId", ans.question);
+  //           form.append("selectedOption", ans.selectedOption || "");
+  //           form.append("participantAnswer", ans.selectedOption || "");
+  //           form.append("isCorrect", String(ans.isCorrect ?? false));
+  //           form.append("marksObtained", String(ans.marksObtained ?? 0));
+
+  //           uploads.push(
+  //             fetch(`${api}/participations/${participationId}/submit-answer`, {
+  //               method: "POST",
+  //               headers: {
+  //                 // "Content-Type": "multipart/form-data",
+  //                 Authorization: `Bearer ${
+  //                   localStorage.getItem("token") || ""
+  //                 }`,
+  //               },
+  //               body: form,
+  //             })
+  //           );
+  //         }
+  //       });
+  //       if (uploads.length) {
+  //         await Promise.all(uploads);
+  //       }
+  //     }
+
+  //     dispatchQuiz({ type: "COMPLETE_QUIZ" });
+  //     setHasParticipated(true);
+  //     setParticipationStatus("pending");
+  //     setShowConfirmation(false);
+  //     toast.success(
+  //       "Quiz submitted successfully! Your result is pending admin review."
+  //     );
+  //   } catch (error: unknown) {
+  //     console.error("Quiz submission error:", error);
+  //     toast.error(
+  //       (error as Error).message || "Failed to submit quiz. Please try again."
+  //     );
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }, [
+  //   isSubmitting,
+  //   currentUser,
+  //   router,
+  //   dispatch,
+  //   quizId,
+  //   answers,
+  //   calculateScore,
+  //   answerImages,
+  //   quizQuestions,
+  // ]);
+
   const handleSubmitQuiz = useCallback(async () => {
     if (isSubmitting) return;
 
     const userId = currentUser?._id;
-
-    if (!currentUser || !currentUser._id) {
+    if (!currentUser || !userId) {
       toast.error("User information not available. Please log in again.");
       router.push("/auth");
       return;
@@ -309,7 +364,7 @@ export default function ParticipateQuiz({
     try {
       const created = await dispatch(
         createParticipation({
-          studentId: userId!,
+          studentId: userId,
           quizId,
           answers,
           totalScore,
@@ -320,11 +375,14 @@ export default function ParticipateQuiz({
       if (created && created._id) {
         const participationId = created._id as string;
         const uploads: Promise<Response>[] = [];
-        answers.forEach((ans) => {
+
+        for (const ans of answers) {
           const q = quizQuestions.find(
             (qq: IQuestion) => qq._id === ans.question
           );
-          if (!q) return;
+          if (!q) continue;
+
+          // Only upload files for written or short questions
           if (
             (q.questionType === "Short" || q.questionType === "Written") &&
             answerImages[ans.question]?.length
@@ -335,14 +393,14 @@ export default function ParticipateQuiz({
             );
             form.append("questionId", ans.question);
             form.append("selectedOption", ans.selectedOption || "");
-            form.append("participantAnswer", ans.selectedOption || "");
+            form.append("participantAnswer", ans.participantAnswer || "");
             form.append("isCorrect", String(ans.isCorrect ?? false));
             form.append("marksObtained", String(ans.marksObtained ?? 0));
+
             uploads.push(
               fetch(`${api}/participations/${participationId}/submit-answer`, {
                 method: "POST",
                 headers: {
-                  "Content-Type": "multipart/form-data",
                   Authorization: `Bearer ${
                     localStorage.getItem("token") || ""
                   }`,
@@ -351,7 +409,8 @@ export default function ParticipateQuiz({
               })
             );
           }
-        });
+        }
+
         if (uploads.length) {
           await Promise.all(uploads);
         }
@@ -364,7 +423,7 @@ export default function ParticipateQuiz({
       toast.success(
         "Quiz submitted successfully! Your result is pending admin review."
       );
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Quiz submission error:", error);
       toast.error(
         (error as Error).message || "Failed to submit quiz. Please try again."

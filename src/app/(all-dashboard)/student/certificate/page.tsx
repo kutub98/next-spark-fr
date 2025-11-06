@@ -1,341 +1,257 @@
 "use client";
 
-import { useRef, useState } from "react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import Image from "next/image";
+import { api } from "@/data/api";
+import { RootState } from "@/store/store";
+import { useEffect, useState, useMemo } from "react";
+import { useSelector } from "react-redux";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { motion, AnimatePresence } from "framer-motion";
-import { Download, X } from "lucide-react";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle, XCircle } from "lucide-react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 
-// -------------------------
-// Dummy Event Data
-// -------------------------
-type StudentEvent = {
-  id: string;
-  eventName: string;
-  date: string;
-  status: "Participated" | "Not Participated";
-};
-
-const studentEvents: StudentEvent[] = [
-  {
-    id: "1",
-    eventName: "Hackathon 2025",
-    date: "2025-06-10",
-    status: "Participated",
-  },
-  {
-    id: "2",
-    eventName: "AI Workshop",
-    date: "2025-07-05",
-    status: "Participated",
-  },
-  {
-    id: "3",
-    eventName: "Design Sprint",
-    date: "2025-08-12",
-    status: "Not Participated",
-  },
-  {
-    id: "4",
-    eventName: "Innovation Challenge",
-    date: "2025-09-20",
-    status: "Participated",
-  },
-];
-
-// -------------------------
-// Main Component
-// -------------------------
-export default function CertificatePage() {
-  const studentName = "Farhad Hosen";
-  const certRef = useRef<HTMLDivElement>(null);
-  const [previewImg, setPreviewImg] = useState<string | null>(null);
-
-  const generateCertificateImage = async (event: StudentEvent) => {
-    if (!certRef.current) return null;
-
-    // Inject dynamic content
-    certRef.current.querySelector("#cert-name")!.textContent = studentName;
-    certRef.current.querySelector("#cert-event")!.textContent = event.eventName;
-    certRef.current.querySelector("#cert-date")!.textContent = new Date(
-      event.date
-    ).toLocaleDateString();
-
-    // Generate high-resolution canvas
-    const canvas = await html2canvas(certRef.current, {
-      scale: 3,
-      useCORS: true,
-      backgroundColor: null,
-    });
-    return canvas.toDataURL("image/png");
+interface Participation {
+  _id: string;
+  quiz: {
+    _id: string;
+    title: string;
+    totalQuestions: number;
+    totalMarks: number;
   };
-
-  const handlePreview = async (event: StudentEvent) => {
-    const imgData = await generateCertificateImage(event);
-    if (imgData) setPreviewImg(imgData);
+  obtainedMarks: number;
+  correctAnswers: number;
+  wrongAnswers: number;
+  rank: number;
+  createdAt: string;
+  status: string;
+  user: {
+    _id: string;
+    fullNameEnglish: string;
   };
+}
 
-  const handleDownload = (type: "pdf" | "image") => {
-    if (!previewImg) return;
+const CertificatePage = () => {
+  const [participations, setParticipations] = useState<Participation[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    if (type === "pdf") {
-      const pdf = new jsPDF("l", "mm", "a4");
-      const width = pdf.internal.pageSize.getWidth();
-      const height = pdf.internal.pageSize.getHeight();
-      pdf.addImage(previewImg, "PNG", 0, 0, width, height);
-      pdf.save(`certificate-${studentName}.pdf`);
-    } else {
-      const a = document.createElement("a");
-      a.href = previewImg;
-      a.download = `certificate-${studentName}.png`;
-      a.click();
-    }
-  };
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${api}/participations`);
+        const data = await response.json();
+
+        if (data?.success && Array.isArray(data.data)) {
+          const userParticipations = data.data.filter(
+            (item: Participation) => item.user._id === user?._id
+          );
+          setParticipations(userParticipations);
+        }
+      } catch (error) {
+        console.error("Error fetching participation data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?._id) fetchData();
+  }, [user]);
+
+  const stats = useMemo(() => {
+    if (participations.length === 0) return { total: 0, completed: 0, avg: 0 };
+
+    const total = participations.length;
+    const completed = participations.filter(
+      (p) => p.status === "completed"
+    ).length;
+    const avg =
+      participations.reduce((acc, p) => acc + p.obtainedMarks, 0) /
+      participations.length;
+
+    return { total, completed, avg: avg.toFixed(1) };
+  }, [participations]);
+
+  // Prepare data for chart
+  const chartData = useMemo(() => {
+    return participations.map((p) => ({
+      name: p.quiz.title,
+      score: p.obtainedMarks,
+      total: p.quiz.totalMarks,
+    }));
+  }, [participations]);
+
+  if (loading) return <div className="text-center mt-20">Loading...</div>;
+  if (participations.length === 0)
+    return (
+      <div className="text-center mt-20 text-gray-500">
+        No participation records found.
+      </div>
+    );
 
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-purple-700 mb-2">
-        🎓 Certificate Generator
-      </h1>
-      <p className="text-gray-600 mb-6">
-        Click a button to preview or download a certificate for a completed
-        event.
-      </p>
+    <div className=" max-w-7xl mx-auto space-y-8">
+      {/* Dashboard Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <Card className="flex flex-col gap-0 items-center justify-center text-center p-2 hover:shadow-lg transition-shadow duration-300">
+          <CardTitle className="text-lg font-semibold">Total Quizzes</CardTitle>
+          <p className="text-2xl font-bold ">{stats.total}</p>
+        </Card>
 
-      {/* Event Table */}
-      <div className="overflow-x-auto border rounded-lg shadow-sm bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Event Name</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {studentEvents.map((event) => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium">{event.eventName}</TableCell>
-                <TableCell>
-                  {new Date(event.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      event.status === "Participated"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {event.status}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {event.status === "Participated" ? (
-                    <Button
-                      variant="secondary"
-                      onClick={() => handlePreview(event)}
-                    >
-                      Preview
-                    </Button>
-                  ) : (
-                    <span className="text-muted-foreground">N/A</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <Card className="flex flex-col gap-0 items-center justify-center text-center p-2 hover:shadow-lg transition-shadow duration-300">
+          <CardTitle className="text-lg font-semibold">Completed</CardTitle>
+          <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+        </Card>
+
+        <Card className="col-span-2 gap-0 md:col-span-1 flex flex-col items-center justify-center text-center p-2 hover:shadow-lg transition-shadow duration-300">
+          <CardTitle className="text-lg font-semibold">Average Score</CardTitle>
+          <p className="text-2xl font-bold">{stats.avg}%</p>
+        </Card>
       </div>
 
-      {/* Hidden Certificate Layout */}
-      <div
-        ref={certRef}
-        className="hidden fixed top-0 left-0 w-[1200px] h-[850px] text-center"
-        style={{
-          backgroundImage: "url('/certificate-bg.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          color: "#333333",
-          fontFamily: "Poppins, sans-serif",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            padding: "4rem",
-            textAlign: "center",
-          }}
-        >
-          {/* Badge */}
-          <div
-            style={{
-              position: "absolute",
-              top: "3rem",
-              left: "3rem",
-              backgroundColor: "#facc15",
-              color: "#5b21b6",
-              fontWeight: 700,
-              padding: "0.5rem 1.5rem",
-              borderRadius: "9999px",
-              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
-            }}
-          >
-            4th AWARD
-          </div>
+      {/* Participation Cards */}
+      <div className="grid gap-6">
+        {participations.map((p) => {
+          const scorePercent = (p.obtainedMarks / p.quiz.totalMarks) * 100 || 0;
 
-          <h1 style={{ fontSize: "2.5rem", fontWeight: 800, color: "#1f2937" }}>
-            CERTIFICATE <span style={{ color: "#7e22ce" }}>OF ACHIEVEMENT</span>
-          </h1>
-          <p style={{ color: "#4b5563", fontWeight: 500, marginTop: "0.5rem" }}>
-            THIS IS PROUDLY PRESENTED TO
-          </p>
-
-          <h2
-            id="cert-name"
-            style={{
-              fontSize: "3rem",
-              fontWeight: 600,
-              color: "#7e22ce",
-              fontStyle: "italic",
-              marginTop: "1rem",
-            }}
-          >
-            [Student Name]
-          </h2>
-
-          <p
-            style={{
-              color: "#374151",
-              marginTop: "1.5rem",
-              fontSize: "1.1rem",
-              maxWidth: "700px",
-            }}
-          >
-            for successfully participating in
-          </p>
-
-          <h3
-            id="cert-event"
-            style={{
-              fontSize: "1.6rem",
-              fontWeight: 700,
-              color: "#1f2937",
-              marginTop: "0.5rem",
-            }}
-          >
-            [Event Name]
-          </h3>
-
-          <p style={{ color: "#4b5563", marginTop: "1rem" }}>
-            Presented on <span id="cert-date">[Date]</span>
-          </p>
-
-          {/* Signatures */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: "4rem",
-              left: 0,
-              right: 0,
-              display: "flex",
-              justifyContent: "space-around",
-              fontSize: "0.9rem",
-              color: "#374151",
-            }}
-          >
-            <div>
-              <hr
-                style={{
-                  border: "none",
-                  borderTop: "2px solid #9ca3af",
-                  width: "8rem",
-                  margin: "0 auto 0.25rem",
-                }}
-              />
-              <p>Organizer Signature</p>
-            </div>
-            <div>
-              <hr
-                style={{
-                  border: "none",
-                  borderTop: "2px solid #9ca3af",
-                  width: "8rem",
-                  margin: "0 auto 0.25rem",
-                }}
-              />
-              <p>Authority Signature</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Preview Modal */}
-      <AnimatePresence>
-        {previewImg && (
-          <motion.div
-            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white rounded-xl overflow-hidden shadow-2xl max-w-5xl w-full relative"
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
+          return (
+            <Card
+              key={p._id}
+              className="hover:scale-102 transition-transform duration-300 border"
             >
-              <button
-                className="absolute top-3 right-3 bg-gray-200 hover:bg-gray-300 rounded-full p-2"
-                onClick={() => setPreviewImg(null)}
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <div className="p-6 flex flex-col items-center gap-4">
-                <h2 className="text-xl font-semibold text-purple-700">
-                  Certificate Preview
-                </h2>
-                <div className="border rounded-lg overflow-hidden shadow-md">
-                  <Image
-                    src={previewImg}
-                    alt="Certificate Preview"
-                    width={1000}
-                    height={700}
-                    className="rounded-lg"
-                  />
-                </div>
-                <div className="flex gap-3 mt-4">
-                  <Button onClick={() => handleDownload("image")}>
-                    <Download className="h-4 w-4 mr-2" /> Download Image
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDownload("pdf")}
-                  >
-                    <Download className="h-4 w-4 mr-2" /> Download PDF
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-lg md:text-xl font-semibold">
+                        {p.quiz.title}
+                      </CardTitle>
+                      <CardDescription className="text-sm text-gray-500 flex items-center gap-2">
+                        {new Date(p.createdAt).toLocaleDateString()} |{" "}
+                        {p.status === "completed" ? (
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-yellow-500" />
+                        )}
+                        <span className="font-medium">{p.status}</span>
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent>
+                  <CardContent className="space-y-4">
+                    {/* Animated Score Progress */}
+                    <div>
+                      <p className="font-medium mb-2">Score Progress</p>
+                      <Progress
+                        value={scorePercent}
+                        className={`h-4 rounded-full transition-all duration-700 ease-out ${
+                          scorePercent >= 70
+                            ? "bg-green-500"
+                            : scorePercent >= 40
+                            ? "bg-yellow-400"
+                            : "bg-red-500"
+                        }`}
+                      />
+                      <p className="text-sm mt-1">
+                        {p.obtainedMarks} / {p.quiz.totalMarks} (
+                        {scorePercent.toFixed(0)}%)
+                      </p>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="font-medium">Correct</p>
+                        <p>{p.correctAnswers}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Wrong</p>
+                        <p>{p.wrongAnswers}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Rank</p>
+                        <p>{p.rank}</p>
+                      </div>
+                      <div>
+                        <p className="font-medium">Questions</p>
+                        <p>{p.quiz.totalQuestions}</p>
+                      </div>
+                    </div>
+
+                    {/* Download Certificate */}
+                    {p.status === "completed" && (
+                      <div className="flex justify-end">
+                        <Button
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() =>
+                            alert(`Download certificate for ${p.quiz.title}`)
+                          }
+                        >
+                          Download Certificate
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Performance Chart */}
+      <Card className="hover:shadow-lg transition-shadow duration-300">
+        <CardHeader>
+          <CardTitle>Quiz Performance</CardTitle>
+          <CardDescription>Visual overview of your quiz scores</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="#3b82f6"
+                strokeWidth={3}
+              />
+              <Line
+                type="monotone"
+                dataKey="total"
+                stroke="#10b981"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default CertificatePage;
