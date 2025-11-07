@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -17,6 +17,7 @@ import jsPDF from "jspdf";
 import React from "react";
 import { toast } from "sonner";
 import { api } from "@/data/api";
+import { Loader2 } from "lucide-react";
 
 export default function CertificateModal({
   open,
@@ -24,16 +25,14 @@ export default function CertificateModal({
   participant,
 }: any) {
   const ref = useRef<HTMLDivElement>(null);
-  const [signatures, setSignatures] = React.useState([
-    { name: "", signature: "", designation: "" },
-    { name: "", signature: "", designation: "" },
-  ]);
-  const [sponsored, setSponsored] = React.useState([
-    { name: "", signature: "" },
-  ]);
-  const [organized, setOrganized] = React.useState([{ name: "", origin: "" }]);
+  const [loading, setLoading] = useState(false);
 
-  console.log("Participant in modal:", participant);
+  const [signatures, setSignatures] = useState([
+    { name: "", signature: "", designation: "" },
+    { name: "", signature: "", designation: "" },
+  ]);
+  const [sponsored, setSponsored] = useState([{ name: "", signature: "" }]);
+  const [organized, setOrganized] = useState([{ name: "", origin: "" }]);
 
   const getOrdinal = (n: number) => {
     const s = ["th", "st", "nd", "rd"],
@@ -43,7 +42,6 @@ export default function CertificateModal({
 
   const getOrdinalWord = (n: number): string => {
     if (n <= 0) return "";
-
     const ones = [
       "",
       "FIRST",
@@ -66,7 +64,6 @@ export default function CertificateModal({
       "EIGHTEENTH",
       "NINETEENTH",
     ];
-
     const tens = [
       "",
       "",
@@ -79,7 +76,6 @@ export default function CertificateModal({
       "EIGHTY",
       "NINETY",
     ];
-
     const hundreds = [
       "",
       "ONE HUNDRED",
@@ -92,21 +88,18 @@ export default function CertificateModal({
       "EIGHT HUNDRED",
       "NINE HUNDRED",
     ];
-
     if (n < 20) return ones[n];
     if (n < 100) {
       const ten = Math.floor(n / 10);
       const one = n % 10;
       return one === 0 ? tens[ten] : `${tens[ten]}-${ones[one]}`;
     }
-
     if (n < 1000) {
       const hundred = Math.floor(n / 100);
       const remainder = n % 100;
       if (remainder === 0) return hundreds[hundred];
       return `${hundreds[hundred]} ${getOrdinalWord(remainder)}`;
     }
-
     return `${n}TH`;
   };
 
@@ -115,21 +108,6 @@ export default function CertificateModal({
     return await toPng(ref.current, { pixelRatio: 2, cacheBust: true });
   };
 
-  // const downloadPDF = async () => {
-  //   const url = await capture();
-  //   if (!url) return;
-
-  //   const pdf = new jsPDF("l", "mm", "a4");
-  //   const img = new window.Image();
-  //   img.src = url;
-  //   img.onload = () => {
-  //     const w = pdf.internal.pageSize.getWidth();
-  //     const h = (img.height * w) / img.width;
-  //     pdf.addImage(url, "PNG", 0, 0, w, h);
-  //     pdf.save(`${participant?.user?.fullNameEnglish}.pdf`);
-  //   };
-  // };
-
   const downloadPDF = async () => {
     const url = await capture();
     if (!url) return;
@@ -137,29 +115,30 @@ export default function CertificateModal({
     const img = new window.Image();
     img.src = url;
     img.onload = () => {
-      const pdfWidth = 297; // landscape A4 width in mm
-      const pdfHeight = (img.height * pdfWidth) / img.width; // maintain aspect ratio
-
-      // Create PDF with dynamic height
+      const pdfWidth = 297; // A4 landscape width
+      const pdfHeight = (img.height * pdfWidth) / img.width;
       const pdf = new jsPDF("l", "mm", [pdfWidth, pdfHeight]);
-
       pdf.addImage(url, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${participant?.user?.fullNameEnglish}.pdf`);
     };
   };
 
   const uploadImgBB = async () => {
-    const url = await capture();
-    if (!url) return;
-
-    const base64 = url.split(",")[1];
-
-    // 1️⃣ Upload to Imgbb
-    const fd = new FormData();
-    fd.append("image", base64);
-    fd.append("key", "4c7e773ceec6622d7f2c91c17d0e0b71");
-
+    setLoading(true);
     try {
+      const url = await capture();
+      if (!url) {
+        toast.error("Failed to capture image");
+        return;
+      }
+
+      const base64 = url.split(",")[1];
+
+      // Upload to Imgbb
+      const fd = new FormData();
+      fd.append("image", base64);
+      fd.append("key", "4c7e773ceec6622d7f2c91c17d0e0b71");
+
       const res = await fetch("https://api.imgbb.com/1/upload", {
         method: "POST",
         body: fd,
@@ -167,23 +146,21 @@ export default function CertificateModal({
       const json = await res.json();
 
       if (!json.success) {
-        toast.error("ImgBB Upload failed");
+        toast.error("ImgBB upload failed");
         return;
       }
 
       const imageUrl = json.data.url;
-      toast.success("ImgBB Upload successful");
+      toast.success("Image uploaded successfully");
 
-      // 2️⃣ Save to your database
-      const dbRes = await fetch(`http://localhost:5000/api/certificates`, {
+      // Save to database
+      const dbRes = await fetch(`${api}/certificates`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imageUrl,
           userId: participant.user._id,
-          participationId: participant.quiz._id,
+          participationId: participant._id,
           rank: participant.rank,
           marks: participant.obtainedMarks,
           totalMarks: participant.quiz.totalMarks,
@@ -194,15 +171,17 @@ export default function CertificateModal({
       const dbJson = await dbRes.json();
 
       if (dbRes.ok) {
-        toast.success("Certificate saved in DB!");
-        console.log("Saved certificate:", dbJson.certificate);
+        toast.success("Certificate saved successfully!");
+        onOpenChange(false); // ✅ Close modal
       } else {
         console.error(dbJson);
         toast.error("Failed to save certificate in DB");
       }
     } catch (err) {
       console.error(err);
-      alert("Upload failed");
+      toast.error("Upload failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -250,10 +229,10 @@ export default function CertificateModal({
                 />
               </div>
             ))}
+
             {sponsored.map((s, i) => (
               <div key={i} className="p-4 border rounded bg-indigo-50">
                 <Label>Sponsored By {i + 1}</Label>
-
                 <Input
                   placeholder="Name"
                   value={s.name}
@@ -265,10 +244,10 @@ export default function CertificateModal({
                 />
               </div>
             ))}
+
             {organized.map((s, i) => (
               <div key={i} className="p-4 border rounded bg-indigo-50">
                 <Label>Organized By {i + 1}</Label>
-
                 <Input
                   placeholder="Name"
                   value={s.name}
@@ -280,6 +259,7 @@ export default function CertificateModal({
                 />
               </div>
             ))}
+
             <Button className="w-full" onClick={downloadPDF}>
               Download PDF
             </Button>
@@ -297,7 +277,7 @@ export default function CertificateModal({
               {getOrdinal(participant?.rank)}
             </div>
             <div
-              className="absolute top-[46%] left-1/2 -translate-x-1/2 text-6xl font-bold"
+              className="absolute top-[45%] left-1/2 -translate-x-1/2 text-6xl font-bold"
               style={{ color: "#9c4e98" }}
             >
               {participant?.user?.fullNameEnglish}
@@ -369,8 +349,18 @@ export default function CertificateModal({
         </div>
 
         <div className="flex justify-end mt-4">
-          <Button onClick={uploadImgBB} className="bg-green-600">
-            Generate Certificate
+          <Button
+            onClick={uploadImgBB}
+            className="bg-green-600"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...
+              </>
+            ) : (
+              "Generate Certificate"
+            )}
           </Button>
         </div>
       </DialogContent>

@@ -50,7 +50,7 @@ const sidebarItems = {
       href: "/admin/participant-analytics",
       icon: BarChart3,
     },
-    { label: "রিপোর্ট", href: "/admin/reports", icon: FileText },
+    { label: "রিপোর্ট ও সার্টিফিকেট", href: "/admin/reports", icon: FileText },
     {
       label: "Appearance",
       icon: BarChart3,
