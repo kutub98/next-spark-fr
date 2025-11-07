@@ -28,9 +28,10 @@ export default function CertificateModal({
     { name: "", signature: "", designation: "" },
     { name: "", signature: "", designation: "" },
   ]);
-  const [organization, setOrganization] = React.useState([
+  const [sponsored, setSponsored] = React.useState([
     { name: "", signature: "" },
   ]);
+  const [organized, setOrganized] = React.useState([{ name: "", origin: "" }]);
 
   console.log("Participant in modal:", participant);
 
@@ -114,35 +115,38 @@ export default function CertificateModal({
     return await toPng(ref.current, { pixelRatio: 2, cacheBust: true });
   };
 
+  // const downloadPDF = async () => {
+  //   const url = await capture();
+  //   if (!url) return;
+
+  //   const pdf = new jsPDF("l", "mm", "a4");
+  //   const img = new window.Image();
+  //   img.src = url;
+  //   img.onload = () => {
+  //     const w = pdf.internal.pageSize.getWidth();
+  //     const h = (img.height * w) / img.width;
+  //     pdf.addImage(url, "PNG", 0, 0, w, h);
+  //     pdf.save(`${participant?.user?.fullNameEnglish}.pdf`);
+  //   };
+  // };
+
   const downloadPDF = async () => {
     const url = await capture();
     if (!url) return;
 
-    const pdf = new jsPDF("l", "mm", "a4");
     const img = new window.Image();
     img.src = url;
     img.onload = () => {
-      const w = pdf.internal.pageSize.getWidth();
-      const h = (img.height * w) / img.width;
-      pdf.addImage(url, "PNG", 0, 0, w, h);
+      const pdfWidth = 297; // landscape A4 width in mm
+      const pdfHeight = (img.height * pdfWidth) / img.width; // maintain aspect ratio
+
+      // Create PDF with dynamic height
+      const pdf = new jsPDF("l", "mm", [pdfWidth, pdfHeight]);
+
+      pdf.addImage(url, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`${participant?.user?.fullNameEnglish}.pdf`);
     };
   };
-
-  // const uploadImgBB = async () => {
-  //   const url = await capture();
-  //   if (!url) return;
-  //   const base64 = url.split(",")[1];
-  //   const fd = new FormData();
-  //   fd.append("image", base64);
-  //   fd.append("key", "4c7e773ceec6622d7f2c91c17d0e0b71");
-  //   const res = await fetch("https://api.imgbb.com/1/upload", {
-  //     method: "POST",
-  //     body: fd,
-  //   });
-  //   const json = await res.json();
-  //   alert(json.success ? "Uploaded!" : "Failed");
-  // };
 
   const uploadImgBB = async () => {
     const url = await capture();
@@ -246,7 +250,7 @@ export default function CertificateModal({
                 />
               </div>
             ))}
-            {organization.map((s, i) => (
+            {sponsored.map((s, i) => (
               <div key={i} className="p-4 border rounded bg-indigo-50">
                 <Label>Sponsored By {i + 1}</Label>
 
@@ -254,9 +258,24 @@ export default function CertificateModal({
                   placeholder="Name"
                   value={s.name}
                   onChange={(e) => {
-                    const u = [...organization];
+                    const u = [...sponsored];
                     u[i].name = e.target.value;
-                    setOrganization(u);
+                    setSponsored(u);
+                  }}
+                />
+              </div>
+            ))}
+            {organized.map((s, i) => (
+              <div key={i} className="p-4 border rounded bg-indigo-50">
+                <Label>Organized By {i + 1}</Label>
+
+                <Input
+                  placeholder="Name"
+                  value={s.name}
+                  onChange={(e) => {
+                    const u = [...organized];
+                    u[i].name = e.target.value;
+                    setOrganized(u);
                   }}
                 />
               </div>
@@ -312,31 +331,34 @@ export default function CertificateModal({
               );
             })}
 
-            {organization.map((s, i) => {
-              const pos = [{ b: "28%", l: "50%" }][i];
-              return (
-                <div
-                  key={i}
-                  className="absolute w-auto "
-                  style={{
-                    bottom: pos?.b,
-                    left: pos?.l,
-
-                    color: "#3d3b3c",
-                  }}
-                >
-                  <span className="text-lg font-bold !text-uppercase">
+            <div className="absolute bottom-[29%] w-6/8 left-1/2 -translate-x-1/2 text-center">
+              <h1>
+                For outstanding performance and achieving the{" "}
+                <span className="font-bold">
+                  {getOrdinal(participant?.rank)}
+                </span>{" "}
+                in the{" "}
+                <span className="font-bold capitalize">
+                  {participant?.quiz?.title}
+                </span>
+                . Your achievement is a reflection of your hard work and
+                dedication. Congratulations and best wishes! — Organized by{" "}
+                {organized.map((s, i) => (
+                  <span key={i} className="text-lg font-bold capitalize">
                     {s.name || "Name"}
+                    {i !== organized.length - 1 && ", "}
                   </span>
-                </div>
-              );
-            })}
-
-            <div className="absolute top-[59%] left-[36.8%]  font-semibold text-gray-700">
-              <span className="text-lg !text-uppercase">
-                {getOrdinal(participant?.rank)}
-              </span>
+                ))}{" "}
+                & sponsored by{" "}
+                {sponsored.map((s, i) => (
+                  <span key={i} className="text-lg font-bold capitalize">
+                    {s.name || "Name"}
+                    {i !== sponsored.length - 1 && ", "}
+                  </span>
+                ))}
+              </h1>
             </div>
+
             <div
               className="absolute bottom-[16%] left-[44%]"
               style={{ color: "#413a41ce" }}
