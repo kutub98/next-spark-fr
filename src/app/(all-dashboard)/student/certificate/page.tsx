@@ -2,7 +2,7 @@
 
 import { api } from "@/data/api";
 import { RootState } from "@/store/store";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useSelector } from "react-redux";
 import {
   Card,
@@ -13,12 +13,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   ResponsiveContainer,
   LineChart,
@@ -28,6 +27,10 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { Download, Eye } from "lucide-react";
+import { toPng } from "html-to-image";
+import jsPDF from "jspdf";
+import Image from "next/image";
 
 interface Participation {
   _id: string;
@@ -49,12 +52,29 @@ interface Participation {
   };
 }
 
+interface Certificate {
+  _id: string;
+  imageUrl: string;
+  rank: string;
+  marks: number;
+  totalMarks: number;
+  user: {
+    _id: string;
+    fullNameEnglish: string;
+  };
+  createdAt: string;
+}
+
 const CertificatePage = () => {
   const [participations, setParticipations] = useState<Participation[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const certificateRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const { user } = useSelector((state: RootState) => state.auth);
 
+  // Fetch participations
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -77,6 +97,22 @@ const CertificatePage = () => {
     if (user?._id) fetchData();
   }, [user]);
 
+  // Fetch user certificates
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      try {
+        const res = await fetch(`${api}/certificates/user/${user?._id}`);
+        const data = await res.json();
+        setCertificates(data);
+      } catch (error) {
+        console.error("Error fetching certificates:", error);
+      }
+    };
+
+    if (user?._id) fetchCertificates();
+  }, [user]);
+
+  // Stats summary
   const stats = useMemo(() => {
     if (participations.length === 0) return { total: 0, completed: 0, avg: 0 };
 
@@ -91,7 +127,7 @@ const CertificatePage = () => {
     return { total, completed, avg: avg.toFixed(1) };
   }, [participations]);
 
-  // Prepare data for chart
+  // Chart data
   const chartData = useMemo(() => {
     return participations.map((p) => ({
       name: p.quiz.title,
@@ -100,131 +136,168 @@ const CertificatePage = () => {
     }));
   }, [participations]);
 
+  // Download as Image
+  const handleDownloadImage = async (id: string) => {
+    const element = certificateRefs.current[id];
+    if (!element) return;
+
+    try {
+      const dataUrl = await toPng(element);
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = `certificate-${id}.png`;
+      link.click();
+    } catch (error) {
+      console.error("Error generating image:", error);
+    }
+  };
+
+  // Download as PDF
+  const handleDownloadPDF = async (id: string) => {
+    const element = certificateRefs.current[id];
+    if (!element) return;
+
+    try {
+      const dataUrl = await toPng(element);
+      const pdf = new jsPDF("landscape", "mm", "a4");
+      const width = pdf.internal.pageSize.getWidth();
+      const height = pdf.internal.pageSize.getHeight();
+      pdf.addImage(dataUrl, "PNG", 0, 0, width, height);
+      pdf.save(`certificate-${id}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
   if (loading) return <div className="text-center mt-20">Loading...</div>;
-  if (participations.length === 0)
-    return (
-      <div className="text-center mt-20 text-gray-500">
-        No participation records found.
-      </div>
-    );
 
   return (
-    <div className=" max-w-7xl mx-auto space-y-8">
-      {/* Dashboard Summary */}
+    <div className="max-w-7xl mx-auto space-y-8 p-4">
+      {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        <Card className="flex flex-col gap-0 items-center justify-center text-center p-2 hover:shadow-lg transition-shadow duration-300">
-          <CardTitle className="text-lg font-semibold">Total Quizzes</CardTitle>
-          <p className="text-2xl font-bold ">{stats.total}</p>
+        <Card className="flex flex-col items-center justify-center text-center p-3">
+          <CardTitle>Total Quizzes</CardTitle>
+          <p className="text-2xl font-bold">{stats.total}</p>
         </Card>
-
-        <Card className="flex flex-col gap-0 items-center justify-center text-center p-2 hover:shadow-lg transition-shadow duration-300">
-          <CardTitle className="text-lg font-semibold">Completed</CardTitle>
+        <Card className="flex flex-col items-center justify-center text-center p-3">
+          <CardTitle>Completed</CardTitle>
           <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
         </Card>
-
-        <Card className="col-span-2 gap-0 md:col-span-1 flex flex-col items-center justify-center text-center p-2 hover:shadow-lg transition-shadow duration-300">
-          <CardTitle className="text-lg font-semibold">Average Score</CardTitle>
+        <Card className="col-span-2 md:col-span-1 flex flex-col items-center justify-center text-center p-3">
+          <CardTitle>Average Score</CardTitle>
           <p className="text-2xl font-bold">{stats.avg}%</p>
         </Card>
       </div>
 
-      {/* Participation Cards */}
-      <div className="grid gap-6">
-        {participations.map((p) => {
-          const scorePercent = (p.obtainedMarks / p.quiz.totalMarks) * 100 || 0;
+      {/* My Certificates */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold mt-6">🎓 My Certificates</h2>
+        {certificates.length === 0 ? (
+          <p className="text-gray-500 text-center">No certificates found.</p>
+        ) : (
+          <Card className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {certificates.map((cert) => (
+              <Card key={cert._id} className="p-2 w-full text-center">
+                {/* Capture-only section */}
+                <div
+                  ref={(el) => {
+                    certificateRefs.current[cert._id] = el;
+                  }}
+                  className="capture-area"
+                >
+                  <Image
+                    src={cert.imageUrl}
+                    width={400}
+                    height={200}
+                    alt="Certificate"
+                    className="rounded-lg shadow-sm"
+                  />
+                </div>
+                <CardContent>
+                  <p className="font-semibold mt-2">
+                    {cert.user.fullNameEnglish}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Rank: {cert.rank} | Marks: {cert.marks}/{cert.totalMarks}
+                  </p>
+                </CardContent>
 
-          return (
-            <Card
-              key={p._id}
-              className="hover:scale-102 transition-transform duration-300 border"
-            >
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer flex justify-between items-center">
-                    <div>
-                      <CardTitle className="text-lg md:text-xl font-semibold">
-                        {p.quiz.title}
-                      </CardTitle>
-                      <CardDescription className="text-sm text-gray-500 flex items-center gap-2">
-                        {new Date(p.createdAt).toLocaleDateString()} |{" "}
-                        {p.status === "completed" ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-yellow-500" />
-                        )}
-                        <span className="font-medium">{p.status}</span>
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                </CollapsibleTrigger>
-
-                <CollapsibleContent>
-                  <CardContent className="space-y-4">
-                    {/* Animated Score Progress */}
-                    <div>
-                      <p className="font-medium mb-2">Score Progress</p>
-                      <Progress
-                        value={scorePercent}
-                        className={`h-4 rounded-full transition-all duration-700 ease-out ${
-                          scorePercent >= 70
-                            ? "bg-green-500"
-                            : scorePercent >= 40
-                            ? "bg-yellow-400"
-                            : "bg-red-500"
-                        }`}
-                      />
-                      <p className="text-sm mt-1">
-                        {p.obtainedMarks} / {p.quiz.totalMarks} (
-                        {scorePercent.toFixed(0)}%)
-                      </p>
-                    </div>
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <p className="font-medium">Correct</p>
-                        <p>{p.correctAnswers}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Wrong</p>
-                        <p>{p.wrongAnswers}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Rank</p>
-                        <p>{p.rank}</p>
-                      </div>
-                      <div>
-                        <p className="font-medium">Questions</p>
-                        <p>{p.quiz.totalQuestions}</p>
-                      </div>
-                    </div>
-
-                    {/* Download Certificate */}
-                    {p.status === "completed" && (
-                      <div className="flex justify-end">
-                        <Button
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={() =>
-                            alert(`Download certificate for ${p.quiz.title}`)
-                          }
-                        >
-                          Download Certificate
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-          );
-        })}
+                {/* Buttons not captured */}
+                <div className="flex justify-center gap-2 html2canvas-ignore">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownloadImage(cert._id)}
+                  >
+                    <Download className="w-4 h-4 " /> Image
+                  </Button>
+                  <Button
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => handleDownloadPDF(cert._id)}
+                  >
+                    <Download className="w-4 h-4" /> PDF
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setSelectedCert(cert)}
+                  >
+                    <Eye className="w-4 h-4" /> View
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </Card>
+        )}
       </div>
 
+      {/* View Certificate Modal */}
+      <Dialog open={!!selectedCert} onOpenChange={() => setSelectedCert(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg">
+              Certificate of {selectedCert?.user.fullNameEnglish}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedCert && (
+            <>
+              <div
+                ref={(el) => {
+                  certificateRefs.current[selectedCert._id] = el;
+                }}
+                className="flex flex-col items-center space-y-4"
+              >
+                <Image
+                  src={selectedCert.imageUrl}
+                  width={800}
+                  height={600}
+                  alt="Certificate"
+                  className="rounded-lg shadow-md"
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadImage(selectedCert._id)}
+                >
+                  <Download className="w-4 h-4 mr-1" /> Image
+                </Button>
+                <Button
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => handleDownloadPDF(selectedCert._id)}
+                >
+                  <Download className="w-4 h-4 mr-1" /> PDF
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Performance Chart */}
-      <Card className="hover:shadow-lg transition-shadow duration-300">
+      <Card>
         <CardHeader>
           <CardTitle>Quiz Performance</CardTitle>
-          <CardDescription>Visual overview of your quiz scores</CardDescription>
+          <CardDescription>Overview of your quiz scores</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
@@ -233,19 +306,8 @@ const CertificatePage = () => {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="#3b82f6"
-                strokeWidth={3}
-              />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#10b981"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-              />
+              <Line type="monotone" dataKey="score" stroke="#3b82f6" />
+              <Line type="monotone" dataKey="total" stroke="#10b981" />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>

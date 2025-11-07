@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import React from "react";
+import { toast } from "sonner";
+import { api } from "@/data/api";
 
 export default function CertificateModal({
   open,
@@ -29,6 +31,8 @@ export default function CertificateModal({
   const [organization, setOrganization] = React.useState([
     { name: "", signature: "" },
   ]);
+
+  console.log("Participant in modal:", participant);
 
   const getOrdinal = (n: number) => {
     const s = ["th", "st", "nd", "rd"],
@@ -125,19 +129,77 @@ export default function CertificateModal({
     };
   };
 
+  // const uploadImgBB = async () => {
+  //   const url = await capture();
+  //   if (!url) return;
+  //   const base64 = url.split(",")[1];
+  //   const fd = new FormData();
+  //   fd.append("image", base64);
+  //   fd.append("key", "4c7e773ceec6622d7f2c91c17d0e0b71");
+  //   const res = await fetch("https://api.imgbb.com/1/upload", {
+  //     method: "POST",
+  //     body: fd,
+  //   });
+  //   const json = await res.json();
+  //   alert(json.success ? "Uploaded!" : "Failed");
+  // };
+
   const uploadImgBB = async () => {
     const url = await capture();
     if (!url) return;
+
     const base64 = url.split(",")[1];
+
+    // 1️⃣ Upload to Imgbb
     const fd = new FormData();
     fd.append("image", base64);
     fd.append("key", "4c7e773ceec6622d7f2c91c17d0e0b71");
-    const res = await fetch("https://api.imgbb.com/1/upload", {
-      method: "POST",
-      body: fd,
-    });
-    const json = await res.json();
-    alert(json.success ? "Uploaded!" : "Failed");
+
+    try {
+      const res = await fetch("https://api.imgbb.com/1/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const json = await res.json();
+
+      if (!json.success) {
+        toast.error("ImgBB Upload failed");
+        return;
+      }
+
+      const imageUrl = json.data.url;
+      toast.success("ImgBB Upload successful");
+
+      // 2️⃣ Save to your database
+      const dbRes = await fetch(`http://localhost:5000/api/certificates`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUrl,
+          userId: participant.user._id,
+          participationId: participant.quiz._id,
+          rank: participant.rank,
+          marks: participant.obtainedMarks,
+          totalMarks: participant.quiz.totalMarks,
+          signatures,
+        }),
+      });
+
+      const dbJson = await dbRes.json();
+
+      if (dbRes.ok) {
+        toast.success("Certificate saved in DB!");
+        console.log("Saved certificate:", dbJson.certificate);
+      } else {
+        console.error(dbJson);
+        toast.error("Failed to save certificate in DB");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    }
   };
 
   return (
@@ -286,7 +348,7 @@ export default function CertificateModal({
 
         <div className="flex justify-end mt-4">
           <Button onClick={uploadImgBB} className="bg-green-600">
-            Upload to ImgBB
+            Generate Certificate
           </Button>
         </div>
       </DialogContent>
