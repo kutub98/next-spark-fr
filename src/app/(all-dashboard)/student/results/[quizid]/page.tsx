@@ -276,10 +276,14 @@ const StudentResultView = () => {
           <CardContent>
             <div className="text-center">
               <div
-                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${performance.bgColor} ${performance.color} transition-transform transform hover:scale-105`}
+                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
+                  hasPassed
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                } transition-transform transform hover:scale-105`}
               >
                 {hasPassed ? (
-                  <CheckCircle className="h-4 w-4 mr-1" />
+                  <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
                 ) : (
                   <XCircle className="h-4 w-4 mr-1" />
                 )}
@@ -443,8 +447,8 @@ const StudentResultView = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Performance:</span>
-                  <span className={`font-medium ${performance.color}`}>
-                    {performance.level}
+                  <span className={`font-medium ${hasPassed ? "text-green-600" : "text-red-600"}`}>
+                    {hasPassed ? "Passed" : "Failed"}
                   </span>
                 </div>
               </div>
@@ -460,7 +464,11 @@ const StudentResultView = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={`font-medium ${performance.color}`}>
+                  <span
+                    className={`font-medium ${
+                      hasPassed ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
                     {hasPassed ? "Passed" : "Failed"}
                   </span>
                 </div>

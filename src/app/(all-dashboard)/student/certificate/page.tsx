@@ -660,7 +660,7 @@ const CertificatePage = () => {
 
       {/* ✅ View Certificate Modal */}
       <Dialog open={!!selectedCert} onOpenChange={() => setSelectedCert(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl ">
           <DialogHeader>
             <DialogTitle className="text-lg">
               Certificate of {selectedCert?.user.fullNameEnglish}
@@ -668,7 +668,7 @@ const CertificatePage = () => {
           </DialogHeader>
 
           {selectedCert && (
-            <>
+            <div className="flex flex-row gap-2 items-center">
               <div
                 ref={(el) => {
                   certificateRefs.current[selectedCert._id] = el;
@@ -712,7 +712,7 @@ const CertificatePage = () => {
                   PDF
                 </Button>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>

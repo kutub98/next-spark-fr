@@ -332,7 +332,7 @@ const ParticipantAnalytics = () => {
                     </TableCell>
                     <TableCell>{quiz.title || "Unknown"}</TableCell>
                     <TableCell>
-                      {p.obtainedMarks} / {totalMarks}
+                      {p.obtainedMarks} / {p.totalMarks}
                     </TableCell>
                     <TableCell>
                       <Badge variant={passed ? "default" : "destructive"}>
@@ -403,7 +403,7 @@ const ParticipantAnalytics = () => {
                   <Label className="text-xs text-gray-500">Total Score</Label>
                   <div className="text-sm font-semibold">
                     {editedParticipation.obtainedMarks} /{" "}
-                    {editedParticipation.quiz?.totalMarks || 0}
+                    {editedParticipation?.totalMarks || 0}
                   </div>
                 </div>
               </div>

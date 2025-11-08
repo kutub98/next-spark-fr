@@ -176,6 +176,21 @@ const ParticipationDetailPage = () => {
     setEditable(updated);
   };
 
+  const totalQuestionMarks = useMemo(() => {
+    if (!editable) return 0;
+    return editable.answers.reduce((sum: number, ans: IAnswer) => {
+      const qMarks = getQuestionMarks(ans.question);
+      return sum + qMarks;
+    }, 0);
+  }, [editable]);
+
+  const totalObtainedMarks = useMemo(() => {
+    if (!editable) return 0;
+    return editable.answers.reduce((sum: number, ans: IAnswer) => {
+      return sum + (ans.marksObtained || 0);
+    }, 0);
+  }, [editable]);
+
   const handleSave = async () => {
     if (!editable) return;
     try {
@@ -235,7 +250,9 @@ const ParticipationDetailPage = () => {
             </div>
             <div>
               <Label className="text-xs text-gray-500">Total Score</Label>
-              <div className="text-sm font-semibold">{editable.totalScore}</div>
+              <div className="text-sm font-semibold">
+                {totalObtainedMarks}/{totalQuestionMarks}
+              </div>
             </div>
           </div>
 
@@ -340,7 +357,7 @@ const ParticipationDetailPage = () => {
                     Total
                   </TableCell>
                   <TableCell className="font-semibold">
-                    {editable.totalScore}
+                    {totalObtainedMarks}/{totalQuestionMarks}
                   </TableCell>
                   <TableCell />
                 </TableRow>
