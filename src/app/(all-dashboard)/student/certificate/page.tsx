@@ -609,7 +609,7 @@ const CertificatePage = () => {
                       {cert.user.fullNameEnglish}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Quiz: {cert.participation.quiz.title}
+                      Quiz: {cert.participation?.quiz?.title}
                     </p>
                     <p className="text-sm text-gray-500">
                       Rank: {cert.rank} | Marks: {cert.marks}/{cert.totalMarks}
