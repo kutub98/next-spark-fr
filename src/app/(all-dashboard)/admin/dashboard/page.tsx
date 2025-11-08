@@ -453,7 +453,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="w-full h-80 flex justify-center">
-              <ResponsiveContainer width="60%" height="100%">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
