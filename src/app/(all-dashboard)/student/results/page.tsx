@@ -31,6 +31,12 @@ const StudentResults = () => {
     (state: RootState) => state.participations
   );
 
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+  } = useSelector((state: RootState) => state.auth);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -62,7 +68,38 @@ const StudentResults = () => {
   };
 
   // ✅ Adjusted for backend: use `quiz` instead of `quizId`
-  const filteredParticipations = participations.filter((p) => {
+  // const filteredParticipations = participations.filter((p) => {
+  //   const quizTitle =
+  //     typeof p.quiz === "object" ? p.quiz.title : p.quiz ?? "Unknown";
+
+  //   const matchesSearch =
+  //     searchTerm === "" ||
+  //     quizTitle.toLowerCase().includes(searchTerm.toLowerCase());
+
+  //   const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+
+  //   return matchesSearch && matchesStatus;
+  // });
+
+  // // Calculate stats
+  // const totalParticipations = participations.length;
+  // const completedParticipations = participations.filter(
+  //   (p) => p.status === "completed"
+  // ).length;
+  // const totalScore = participations.reduce(
+  //   (sum, p) => sum + (p.obtainedMarks || p.totalScore || 0),
+  //   0
+  // );
+  // const averageScore =
+  //   totalParticipations > 0 ? (totalScore / totalParticipations).toFixed(1) : 0;
+
+  // ✅ Filter only participations for the logged-in user
+  const userParticipations = participations.filter(
+    (p) => p.user?._id === user?._id
+  );
+
+  // ✅ Then apply filters (search + status)
+  const filteredParticipations = userParticipations.filter((p) => {
     const quizTitle =
       typeof p.quiz === "object" ? p.quiz.title : p.quiz ?? "Unknown";
 
@@ -75,12 +112,12 @@ const StudentResults = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate stats
-  const totalParticipations = participations.length;
-  const completedParticipations = participations.filter(
+  // ✅ Calculate stats only for the logged-in user
+  const totalParticipations = userParticipations.length;
+  const completedParticipations = userParticipations.filter(
     (p) => p.status === "completed"
   ).length;
-  const totalScore = participations.reduce(
+  const totalScore = userParticipations.reduce(
     (sum, p) => sum + (p.obtainedMarks || p.totalScore || 0),
     0
   );
