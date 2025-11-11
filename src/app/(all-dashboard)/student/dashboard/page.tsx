@@ -88,40 +88,42 @@ const StudentDashboard = () => {
   });
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto ">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">ড্যাশবোর্ড</h1>
-          <p className="text-gray-600">
-            আপনার কুইজ অংশগ্রহণের সামগ্রিক অবস্থা দেখুন
-          </p>
+      <div className="bg-white p-4 rounded shadow">
+        <div className="flex items-center justify-between mb-6 ">
+          <div>
+            <h1 className="text-3xl font-bold">ড্যাশবোর্ড</h1>
+            <p className="text-gray-600">
+              আপনার কুইজ অংশগ্রহণের সামগ্রিক অবস্থা দেখুন
+            </p>
+          </div>
+          <RewardPoints size="lg" />
         </div>
-        <RewardPoints size="lg" />
-      </div>
 
-      {/* Search and Filter */}
-      <div className="flex items-center space-x-4 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="কুইজ খুঁজুন..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        {/* Search and Filter */}
+        <div className="flex items-center space-x-4 mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="কুইজ খুঁজুন..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="অবস্থা অনুযায়ী ফিল্টার" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">সব ফলাফল</SelectItem>
+              <SelectItem value="completed">সম্পূর্ণ</SelectItem>
+              <SelectItem value="failed">ব্যর্থ</SelectItem>
+              <SelectItem value="pending">পর্যালোচনাধীন</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="অবস্থা অনুযায়ী ফিল্টার" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">সব ফলাফল</SelectItem>
-            <SelectItem value="completed">সম্পূর্ণ</SelectItem>
-            <SelectItem value="failed">ব্যর্থ</SelectItem>
-            <SelectItem value="pending">পর্যালোচনাধীন</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Participations Grid */}
@@ -136,7 +138,7 @@ const StudentDashboard = () => {
           <p className="text-gray-500">আপনি এখনও কোনো কুইজে অংশগ্রহণ করেননি।</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 bg-white my-2 sm:my-3  p-2 sm:px-4 py-5 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filteredParticipations.map((p) => (
             <Card key={p._id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
