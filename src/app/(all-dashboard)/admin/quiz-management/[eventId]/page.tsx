@@ -273,7 +273,7 @@ const EventDetailPage = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
+      {/* <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <Button variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -288,9 +288,44 @@ const EventDetailPage = () => {
           <Plus className="mr-2 h-4 w-4" />
           Create Quiz
         </Button>
+      </div> */}
+
+      <div className="flex bg-white p-4 rounded-md shadow flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+        {/* Left section (Back button + title info) */}
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className=" justify-center"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        <div className="grid grid-cols-1 gap-6 sm:gap-0">
+          <div className="flex justify-between space-x-1 w-full">
+            <div className="text-start col-span-2 sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold break-words">
+                {selectedEvent.title}
+              </h1>
+              <p className="text-gray-600 text-sm sm:text-base">
+                {selectedEvent.description}
+              </p>
+            </div>
+            {/* <div className="flex justify-end w-full sm:w-auto"> */}
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className=" justify-center"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Quiz
+            </Button>
+            {/* </div> */}
+          </div>
+        </div>
+
+        {/* Right section (Create Quiz button) */}
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 bg-white p-4">
         <div className="flex items-center space-x-4 text-sm text-gray-600">
           <div>
             <strong>Start:</strong>{" "}
