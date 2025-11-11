@@ -226,9 +226,13 @@ const ParticipantAnalytics = () => {
   return (
     <div className="container mx-auto py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Participant Analytics</h1>
-        <div className="flex items-center space-x-2">
+      <div className="flex items-start flex-col sm:justify-between mb-6 bg-white rounded-md shadow p-4">
+        <div>
+          <h1 className="text-xl w-full sm:text-3xl font-bold">
+            Participant Analytics
+          </h1>
+        </div>
+        <div className="flex w-full justify-between sm:justify-end sm:-mt-8 items-center space-x-2">
           <Button onClick={handleRefresh} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" /> Refresh
           </Button>
@@ -239,7 +243,7 @@ const ParticipantAnalytics = () => {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="flex justify-between flex-wrap gap-2 mb-6 bg-white p-4 rounded shadow">
         <div>
           <Label>Filter by Quiz</Label>
           <Select
@@ -298,7 +302,7 @@ const ParticipantAnalytics = () => {
           <p className="text-gray-600">Try changing filters or refresh.</p>
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-md border bg-white p-4">
           <Table>
             <TableHeader>
               <TableRow>
