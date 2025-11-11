@@ -110,39 +110,43 @@ const UsersPage = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto  space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className=" grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white p-2 sm:p-6 rounded shadow">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             ব্যবহারকারী ব্যবস্থাপনা
           </h1>
           <p className="text-gray-600 mt-1">
             সকল নিবন্ধিত ব্যবহারকারীদের তালিকা ও বিস্তারিত তথ্য
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            রিফ্রেশ
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setBulkMessageOpen(true)}
-            className="flex items-center gap-2 text-[#F06122] border-[#F06122]/30 hover:bg-[#F06122]/10"
-          >
-            <MessageSquare className="h-4 w-4" />
-            গণ বার্তা
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            এক্সপোর্ট
-          </Button>
+        <div className="flex items-center justify-between sm:justify-end">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
+              রিফ্রেশ
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setBulkMessageOpen(true)}
+              className="flex items-center gap-2 text-[#F06122] border-[#F06122]/30 hover:bg-[#F06122]/10"
+            >
+              <MessageSquare className="h-4 w-4" />
+              গণ বার্তা
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              এক্সপোর্ট
+            </Button>
+          </div>
         </div>
       </div>
 
