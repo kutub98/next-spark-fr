@@ -177,10 +177,10 @@ const AdminQuizManagement = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-end bg-white p-4 justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Quiz Management</h1>
-          <p className="text-gray-600">Manage events, quizzes, and questions</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">কুইজ পরিচালনা</h1>
+          <p className="text-gray-600"> ম্যানেজ ইভেন্টস, কুইজ্, কোয়েশ্চন্স</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
