@@ -426,14 +426,16 @@ const QuizDetailPage = () => {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
+      {/* <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <Button variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{selectedQuiz.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              {selectedQuiz.title}
+            </h1>
             <p className="text-gray-600">
               {selectedEvent.title} • {selectedQuiz.duration} minutes
             </p>
@@ -456,6 +458,58 @@ const QuizDetailPage = () => {
             </Button>
           )}
           <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Question
+          </Button>
+        </div>
+      </div> */}
+      <div className="flex bg-white p-4 rounded-md shadow flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+        {/* Left section (Back button + title info) */}
+        <div className="grid grid-cols-2 space-y-3 sm:space-y-0">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="w-full sm:w-auto justify-center"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+
+          <div className="text-start col-span-2 sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold break-words">
+              {selectedQuiz.title}
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base">
+              {selectedEvent.title} • {selectedQuiz.duration} minutes
+            </p>
+          </div>
+        </div>
+
+        {/* Right section (Import, Bulk Delete, Create) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 justify-content-end w-full sm:w-auto text-end justify-end items-center gap-2">
+          <QuestionImportDialog
+            quizzes={[selectedQuiz]}
+            onImportQuestions={handleImportQuestions}
+            isImporting={isImporting}
+          />
+
+          {questions.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setBulkDeleteMode(!bulkDeleteMode)}
+              className={`${
+                bulkDeleteMode ? "bg-red-50 text-red-700" : ""
+              } w-full sm:w-auto justify-center`}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {bulkDeleteMode ? "Cancel Bulk Delete" : "Bulk Delete"}
+            </Button>
+          )}
+
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="w-full sm:w-auto justify-center"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Create Question
           </Button>
