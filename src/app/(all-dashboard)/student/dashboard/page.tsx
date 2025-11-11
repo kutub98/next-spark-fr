@@ -93,7 +93,7 @@ const StudentDashboard = () => {
       <div className="bg-white p-4 rounded shadow">
         <div className="flex items-center justify-between mb-6 ">
           <div>
-            <h1 className="text-3xl font-bold">ড্যাশবোর্ড</h1>
+            <h1 className="text-2xl sm:text-3xl  font-bold">ড্যাশবোর্ড</h1>
             <p className="text-gray-600">
               আপনার কুইজ অংশগ্রহণের সামগ্রিক অবস্থা দেখুন
             </p>
