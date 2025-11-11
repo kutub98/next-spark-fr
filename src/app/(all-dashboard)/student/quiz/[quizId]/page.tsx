@@ -401,24 +401,24 @@ const StudentQuizTaking = () => {
         </div>
 
         {/* Quiz Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center text-gray-600">
-            <Trophy className="h-5 w-5 mr-2" />
-            <div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-white p-2 py-4 rounded shadow-2xs">
+          <div className="flex items-start text-gray-600 bg-yellow-50 shadow p-1 rounded">
+            <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
+            <div className="-mt-1">
               <p className="text-sm font-medium">Total Marks</p>
               <p className="text-sm">{selectedQuiz.totalMarks}</p>
             </div>
           </div>
-          <div className="flex items-center text-gray-600">
-            <BookOpen className="h-5 w-5 mr-2" />
-            <div>
+          <div className="flex items-start text-gray-600 bg-primary/20 bg-opacity-80 shadow p-1 rounded">
+            <BookOpen className="h-5 w-5 mr-2 text-primary" />
+            <div className="-mt-1">
               <p className="text-sm font-medium">Questions</p>
               <p className="text-sm">{questions.length}</p>
             </div>
           </div>
-          <div className="flex items-center text-gray-600">
-            <CheckCircle className="h-5 w-5 mr-2" />
-            <div>
+          <div className="flex items-start text-gray-600 bg-green-50 shadow p-1 rounded">
+            <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
+            <div className="-mt-1">
               <p className="text-sm font-medium">Passing Marks</p>
               <p className="text-sm">{selectedQuiz.passingMarks}</p>
             </div>
