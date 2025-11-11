@@ -290,7 +290,7 @@ const EventDetailPage = () => {
         </Button>
       </div> */}
 
-      <div className="flex bg-white p-4 rounded-md shadow flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+      <div className="py-4 bg-white p-4 rounded-md shadow flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
         {/* Left section (Back button + title info) */}
         <Button
           variant="outline"
@@ -300,7 +300,7 @@ const EventDetailPage = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <div className="grid grid-cols-1 gap-6 sm:gap-0">
+        <div className="grid grid-cols-1 gap-6 sm:gap-0 my-2">
           <div className="flex justify-between space-x-1 w-full">
             <div className="text-start col-span-2 sm:text-left">
               <h1 className="text-2xl sm:text-3xl font-bold break-words">
