@@ -673,7 +673,7 @@ export default function ParticipateQuiz({
             variant="outline"
             className="w-full bg-[#232323] text-white border-0"
           >
-            <Link href="/student/quiz">View Results</Link>
+            <Link href={`/student/quiz/${quizId}`}>View Results</Link>
           </Button>
         </div>
       ) : (

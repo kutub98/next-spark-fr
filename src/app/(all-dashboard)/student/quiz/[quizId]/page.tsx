@@ -486,13 +486,14 @@ const StudentQuizTaking = () => {
 
         <div className="flex items-center space-x-2">
           {currentQuestionIndex === questions.length - 1 ? (
-            <Button
-              onClick={handleSubmitQuiz}
-              disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isSubmitting ? "Submitting..." : "Submit Quiz"}
-            </Button>
+            // <Button
+            //   onClick={handleSubmitQuiz}
+            //   disabled={isSubmitting}
+            //   className="bg-green-600 hover:bg-green-700"
+            // >
+            //   {isSubmitting ? "Submitting..." : "Submit Quiz"}
+            // </Button>
+            ""
           ) : (
             <Button
               onClick={() =>

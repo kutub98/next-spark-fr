@@ -51,8 +51,7 @@ const ParticipationDetailPage = () => {
     (s: RootState) => s.questions
   );
 
-  console.log(participations, "participations");
-  console.log(questions, "questions");
+  
 
   const [isSaving, setIsSaving] = useState(false);
   const fileBaseUrl = useMemo(() => api.replace(/\/api\/v1$/, ""), []);

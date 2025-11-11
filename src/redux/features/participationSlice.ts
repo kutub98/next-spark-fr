@@ -2,6 +2,24 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { api } from "@/data/api";
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Types
 export interface IAnswer {
   question: string;
