@@ -351,7 +351,7 @@ const ProfilePage = () => {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">প্রোফাইল ব্যবস্থাপনা</h1>
+        <h1 className="sm:text-3xl text-2xl font-bold">প্রোফাইল ব্যবস্থাপনা</h1>
         <div className="flex space-x-2">
           {isEditing ? (
             <>
