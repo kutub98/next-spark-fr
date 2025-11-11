@@ -151,8 +151,8 @@ const UsersPage = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -168,7 +168,7 @@ const UsersPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -182,7 +182,7 @@ const UsersPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -196,7 +196,7 @@ const UsersPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
