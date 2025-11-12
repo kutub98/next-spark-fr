@@ -9,6 +9,7 @@ import QuizTimelineAndInstructions from "../components/QuizTimelineAndInstructio
 import FaqSection from "../components/FaqItem";
 import JudgeSection from "../components/JudgeSection";
 import EventSection from "../components/EventSection";
+import SponsoredSection from "./sponsored/about/page";
 
 // Loading component for better UX
 const SectionSkeleton = () => (
@@ -45,6 +46,10 @@ export default function Home() {
 
       <Suspense fallback={<SectionSkeleton />}>
         <QuizTimelineAndInstructions />
+      </Suspense>
+
+      <Suspense fallback={<SectionSkeleton />}>
+        <SponsoredSection />
       </Suspense>
 
       <Suspense fallback={<SectionSkeleton />}>

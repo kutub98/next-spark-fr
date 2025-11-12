@@ -7,6 +7,9 @@ import Image from "next/image";
 import { Box } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getSponsors } from "@/app/(all-dashboard)/admin/sponsored-by/actions";
+import Link from "next/link";
+import { api } from "@/data/api";
 
 interface Sponsor {
   _id: string;
@@ -65,7 +68,7 @@ export default function SponsoredSection() {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
+    <section className="py-20 bg-white">
       <div className="container mx-auto text-center px-4">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
@@ -108,7 +111,7 @@ export default function SponsoredSection() {
               >
                 {sponsor.sponsoredImage ? (
                   <Image
-                    src={`http://localhost:5000/${sponsor.sponsoredImage.replace(
+                    src={`${api}/${sponsor.sponsoredImage.replace(
                       /\\/g,
                       "/"
                     )}`}
@@ -142,6 +145,7 @@ export default function SponsoredSection() {
               >
                 {sponsor.about}
               </motion.div>
+              <Link href={`sponsored/about/${sponsor?._id}`}>Details</Link>
             </motion.div>
           ))}
         </motion.div>

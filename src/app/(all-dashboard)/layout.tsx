@@ -26,6 +26,7 @@ import {
   Gavel,
   AlarmClock,
   Award,
+  HeartHandshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -51,6 +52,8 @@ const sidebarItems = {
       icon: BarChart3,
     },
     { label: "রিপোর্ট ও সার্টিফিকেট", href: "/admin/reports", icon: FileText },
+    { label: "স্পনসরশিফ", href: "/admin/sponsored-by", icon: HeartHandshake },
+    // { lable: "Sponsorship", href: "/admin/sponsored-by", icon: HeartHandshake },
     {
       label: "Appearance",
       icon: BarChart3,

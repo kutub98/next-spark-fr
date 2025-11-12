@@ -1,5 +1,3 @@
-
-
 import { api } from "@/data/api";
 
 // GET sponsors (no change)
@@ -26,6 +24,28 @@ export async function createSponsor(data: FormData) {
     throw new Error("Failed to create sponsor");
   }
   return res.json();
+}
+
+// ✅ Fetch a single sponsor by ID
+export async function getSponsorById(id: string) {
+  try {
+    const res = await fetch(`${api}/sponsored-by/${id}`, {
+      method: "GET",
+      cache: "no-store", // ensures fresh data
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Get Sponsor Error:", text);
+      throw new Error(`Failed to fetch sponsor with ID: ${id}`);
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("getSponsorById Error:", err);
+    return null; // return null to handle safely in UI
+  }
 }
 
 // UPDATE sponsor with FormData
