@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Globe } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 import { getSponsorById } from "@/app/(all-dashboard)/admin/sponsored-by/actions";
 import { api } from "@/data/api";
 
@@ -39,10 +39,10 @@ export default async function SponsorPage({
           </Link>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+        <div
+          // initial={{ opacity: 0, y: 20 }}
+          // animate={{ opacity: 1, y: 0 }}
+          // transition={{ duration: 0.4 }}
           className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-200 flex flex-col md:flex-row"
         >
           <div className="relative w-full md:w-1/2 h-64 md:h-auto bg-gray-100">
@@ -89,7 +89,7 @@ export default async function SponsorPage({
               </Link>
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

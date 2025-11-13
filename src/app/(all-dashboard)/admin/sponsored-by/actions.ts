@@ -19,8 +19,8 @@ export async function createSponsor(data: FormData) {
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    console.error("Create Sponsor Error:", text);
+    // const text = await res.text();
+    console.error("Create Sponsor Error:");
     throw new Error("Failed to create sponsor");
   }
   return res.json();
@@ -35,8 +35,8 @@ export async function getSponsorById(id: string) {
     });
 
     if (!res.ok) {
-      const text = await res.text();
-      console.error("Get Sponsor Error:", text);
+      // const text = await res.text();
+      console.error("Get Sponsor Error:");
       throw new Error(`Failed to fetch sponsor with ID: ${id}`);
     }
 
@@ -60,8 +60,8 @@ export async function updateSponsor(id: string, data: FormData) {
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    console.error("Update Sponsor Error:", text);
+    // const text = await res.text();
+    console.error("Update Sponsor Error:");
     throw new Error("Failed to update sponsor");
   }
   return res.json();
