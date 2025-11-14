@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,7 +17,7 @@ import SponsoredByForm from "./SponsoredByForm";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Box, Trash2 } from "lucide-react";
-import { api } from "@/data/api";
+import { api, baseUrl } from "@/data/api";
 
 interface Sponsor {
   _id: string;
@@ -57,6 +58,8 @@ export default function SponsoredByList() {
       loadData(); // rollback if failed
     }
   };
+
+  console.log(sponsors, "sponsors");
 
   return (
     <div className="space-y-8 p-6">
@@ -110,14 +113,11 @@ export default function SponsoredByList() {
               >
                 <div className="relative w-full h-44 sm:h-52 md:h-56 bg-gray-100">
                   {sponsor.sponsoredImage ? (
-                    <Image
-                      src={`${api}/${sponsor.sponsoredImage.replace(
-                        /\\/g,
-                        "/"
-                      )}`}
+                    <img
+                      // src={`${baseUrl}/${sponsor.sponsoredImage}`}
+                      src={`${baseUrl}/${sponsor.sponsoredImage}`}
                       alt={sponsor.name}
-                      fill
-                      className="object-cover"
+                      className="w-full h-full object-cover rounded-t-xl"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-300">

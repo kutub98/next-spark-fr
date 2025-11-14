@@ -14,6 +14,10 @@ import {
   RefreshCw,
   Download,
   MessageSquare,
+  HandHeart,
+  Headset,
+  HeadsetIcon,
+  TrophyIcon,
 } from "lucide-react";
 import { UserCard } from "@/components/admin/UserCard";
 import { UserDetailsDialog } from "@/components/admin/UserDetailsDialog";
@@ -26,6 +30,8 @@ import {
   clearSelectedUserDetails,
   AdminUser,
 } from "@/redux/features/usersSlice";
+import CreateUserPage from "./create/page";
+import { UsersCharts } from "./userChart";
 
 const UsersPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -37,9 +43,9 @@ const UsersPage = () => {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkMessageOpen, setBulkMessageOpen] = useState(false);
-  const [filterRole, setFilterRole] = useState<"all" | "student" | "admin">(
-    "all"
-  );
+  const [filterRole, setFilterRole] = useState<
+    "all" | "student" | "admin" | "volunteer" | "representative" | "recognition"
+  >("all");
 
   useEffect(() => {
     dispatch(getAllUsers());
@@ -77,12 +83,29 @@ const UsersPage = () => {
   const getStats = () => {
     const totalUsers = users.length;
     const studentCount = users.filter((user) => user.role === "student").length;
+    const recognition = users.filter(
+      (user) => user.role === "recognition"
+    ).length;
     const adminCount = users.filter((user) => user.role === "admin").length;
     const activeCount = users.filter(
       (user) => user.isActive === undefined || user.isActive !== false
     ).length;
+    const representativeCount = users.filter(
+      (user) => user.role === "representative"
+    ).length;
+    const volunteerCount = users.filter(
+      (user) => user.role === "volunteer"
+    ).length;
 
-    return { totalUsers, studentCount, adminCount, activeCount };
+    return {
+      totalUsers,
+      recognition,
+      representativeCount,
+      volunteerCount,
+      studentCount,
+      adminCount,
+      activeCount,
+    };
   };
 
   const stats = getStats();
@@ -122,7 +145,7 @@ const UsersPage = () => {
           </p>
         </div>
         <div className="flex items-center justify-between sm:justify-end">
-          <div className="flex items-center gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-1 sm:gap-3 w-full">
             <Button
               variant="outline"
               onClick={handleRefresh}
@@ -146,6 +169,7 @@ const UsersPage = () => {
               <Download className="h-4 w-4" />
               এক্সপোর্ট
             </Button>
+            <CreateUserPage />
           </div>
         </div>
       </div>
@@ -153,7 +177,7 @@ const UsersPage = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <Card className="p-0">
-          <CardContent className="p-6">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
@@ -169,7 +193,7 @@ const UsersPage = () => {
         </Card>
 
         <Card className="p-0">
-          <CardContent className="p-6">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">শিক্ষার্থী</p>
@@ -181,9 +205,55 @@ const UsersPage = () => {
             </div>
           </CardContent>
         </Card>
+        <Card className="p-0">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-yellow-600">
+                  {" "}
+                  ভোলান্টিয়ার
+                </p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {stats.volunteerCount}
+                </p>
+              </div>
+              <HandHeart className="h-8 w-8 text-yellow-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="p-0">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {" "}
+                  রিপ্রেজেনটেটিভ
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {stats.volunteerCount}
+                </p>
+              </div>
+              <TrophyIcon className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
 
         <Card className="p-0">
-          <CardContent className="p-6">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600"> রিকগনেশন</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {stats.recognition}
+                </p>
+              </div>
+              <UserCheck className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="p-0">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">অ্যাডমিন</p>
@@ -197,7 +267,7 @@ const UsersPage = () => {
         </Card>
 
         <Card className="p-0">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">সক্রিয়</p>
@@ -240,6 +310,22 @@ const UsersPage = () => {
                   onClick={() => setFilterRole("student")}
                 >
                   শিক্ষার্থী
+                </Button>
+                <Button
+                  variant={filterRole === "volunteer" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterRole("volunteer")}
+                >
+                  ভোলান্টিয়ার
+                </Button>
+                <Button
+                  variant={
+                    filterRole === "representative" ? "default" : "outline"
+                  }
+                  size="sm"
+                  onClick={() => setFilterRole("representative")}
+                >
+                  রিপ্রেজেন্টাটিভ
                 </Button>
                 <Button
                   variant={filterRole === "admin" ? "default" : "outline"}
@@ -320,6 +406,7 @@ const UsersPage = () => {
         open={bulkMessageOpen}
         onOpenChange={setBulkMessageOpen}
       />
+      <UsersCharts stats={stats} />
     </div>
   );
 };

@@ -12,7 +12,13 @@ export interface User {
   fullNameEnglish: string;
   contact: string;
   contactType: "phone" | "email";
-  role: "student" | "admin";
+  role:
+    | "student"
+    | "admin"
+    | "volunteer"
+    | "representative"
+    | "recognition"
+    | "recognition";
   whatsappNumber?: string;
   age?: number;
   grade?: string;

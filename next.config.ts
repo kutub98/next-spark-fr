@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
   images: {
-    domains: ["localhost"],
+    domains: ["localhost", "127.0.0.1", "http://localhost:3000"],
     remotePatterns: [
       {
         protocol: "https",

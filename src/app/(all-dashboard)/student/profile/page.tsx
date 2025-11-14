@@ -74,7 +74,7 @@ interface User {
   preferredSubjects?: string[];
   futureGoals?: string;
   profileImage?: string;
-  role: "student" | "admin";
+  role: "student" | "admin" | "volunteer" | "representative" | "recognition";
 }
 
 interface PasswordData {

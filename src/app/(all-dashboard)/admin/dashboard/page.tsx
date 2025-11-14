@@ -546,6 +546,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { UsersCharts } from "../users/userChart";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -733,6 +734,36 @@ export default function AdminDashboard() {
     },
   ];
 
+  const getStats = () => {
+    const totalUsers = users.length;
+    const studentCount = users.filter((user) => user.role === "student").length;
+    const recognition = users.filter(
+      (user) => user.role === "recognition"
+    ).length;
+    const adminCount = users.filter((user) => user.role === "admin").length;
+    const activeCount = users.filter(
+      (user) => user.isActive === undefined || user.isActive !== false
+    ).length;
+    const representativeCount = users.filter(
+      (user) => user.role === "representative"
+    ).length;
+    const volunteerCount = users.filter(
+      (user) => user.role === "volunteer"
+    ).length;
+
+    return {
+      totalUsers,
+      recognition,
+      representativeCount,
+      volunteerCount,
+      studentCount,
+      adminCount,
+      activeCount,
+    };
+  };
+
+  const statDashboard = getStats();
+
   return (
     <div className="space-y-6">
       {/* Welcome section */}
@@ -826,38 +857,6 @@ export default function AdminDashboard() {
               </div>
             </div>
           </CardHeader>
-
-          {/* <CardContent className="p-0">
-            <div className="w-full h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="registrations"
-                    stroke="#8884d8"
-                    name="রেজিস্ট্রেশন"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="quizzes"
-                    stroke="#82ca9d"
-                    name="নতুন কুইজ"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="participations"
-                    stroke="#ffc658"
-                    name="অংশগ্রহণ"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent> */}
 
           <CardContent className="p-0">
             <div className="w-full h-[400px] sm:h-[450px] md:h-[500px] lg:h-[550px]">
@@ -972,7 +971,7 @@ export default function AdminDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}
-        className="mt-8"
+        className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2"
       >
         <Card>
           <CardHeader>
@@ -1010,6 +1009,8 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        <UsersCharts stats={statDashboard} />
       </motion.div>
     </div>
   );

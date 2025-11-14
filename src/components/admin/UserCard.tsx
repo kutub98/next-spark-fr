@@ -47,6 +47,13 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onViewDetails }) => {
     );
   };
 
+  const roleMap: Record<string, string> = {
+    admin: "অ্যাডমিন",
+    student: "শিক্ষার্থী",
+    representative: "Representative",
+    volunteer: "Volunteer",
+  };
+
   return (
     <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-[#F06122]/60">
       <CardContent className="p-6">
@@ -69,7 +76,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onViewDetails }) => {
                 variant={user.role === "admin" ? "destructive" : "secondary"}
                 className="mt-1"
               >
-                {user.role === "admin" ? "অ্যাডমিন" : "শিক্ষার্থী"}
+                {roleMap[user.role] || "Unknown"}
               </Badge>
             </div>
           </div>
