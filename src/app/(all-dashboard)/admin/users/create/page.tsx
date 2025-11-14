@@ -2,38 +2,36 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-  SelectContent,
-} from "@/components/ui/select";
-
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Loader2, PlusCircle } from "lucide-react";
 import { api } from "@/data/api";
 
 export default function CreateUserWithModal() {
-  // MAIN FORM MODAL control
   const [formModalOpen, setFormModalOpen] = useState(false);
-
-  // SUCCESS/ERROR MODAL control
   const [resultModalOpen, setResultModalOpen] = useState(false);
+
   const [modalType, setModalType] = useState<"success" | "error">("success");
   const [modalMessage, setModalMessage] = useState("");
 
-  // Input values
   const [loading, setLoading] = useState(false);
   const [contactType, setContactType] = useState("");
   const [role, setRole] = useState("");
@@ -60,120 +58,177 @@ export default function CreateUserWithModal() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Close FORM modal → Open ERROR modal
-        setFormModalOpen(false);
         setModalType("error");
-        setModalMessage(data.message || "Failed to create user");
-        setResultModalOpen(true);
-        setLoading(false);
-        return;
+        setModalMessage(data.message || "Unable to create user");
+      } else {
+        setModalType("success");
+        setModalMessage(`User created successfully (${data.data.contact})`);
       }
 
-      // Close FORM modal → Open SUCCESS modal
       setFormModalOpen(false);
-      setModalType("success");
-      setModalMessage(`User created: ${data.data.contact}`);
       setResultModalOpen(true);
-    } catch (error) {
-      setFormModalOpen(false);
+    } catch (err: any) {
       setModalType("error");
-      setModalMessage("Something went wrong. Try again.");
+      setModalMessage("Network error. Please try again.");
+      setFormModalOpen(false);
       setResultModalOpen(true);
     }
 
     setLoading(false);
   };
 
+  const submitDisabled = loading || !contactType || !role;
+
   return (
     <>
-      {/* BUTTON TO OPEN MAIN FORM */}
+      {/* Open Form Button */}
       <Dialog open={formModalOpen} onOpenChange={setFormModalOpen}>
         <DialogTrigger asChild>
-          <Button>Create User</Button>
+          <Button className="bg-[#F06122] hover:bg-[#d9551c] text-white font-medium flex items-center gap-2">
+            <PlusCircle className="h-5 w-5" />
+            New User
+          </Button>
         </DialogTrigger>
 
-        {/* FORM MODAL */}
-        <DialogContent className="max-w-md">
+        {/* Form Modal */}
+        <DialogContent className="max-w-lg rounded-xl shadow-xl overflow-y-scroll">
           <DialogHeader>
-            <DialogTitle>Create User (Admin)</DialogTitle>
+            <DialogTitle className="text-2xl text-start font-semibold text-gray-800">
+              Create New User
+            </DialogTitle>
+            <DialogDescription className="text-gray-500 text-start">
+              Fill out the details below to add a new user to the system.
+            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label>Full Name (Bangla)</Label>
-              <Input name="fullNameBangla" required />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6 mt-3">
+            {/* SECTION — User Information */}
+            <div className="space-y-4">
+              <h4 className="text-sm text-start font-semibold text-gray-700 tracking-wide">
+                Personal Information
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Full Name (Bangla)</Label>
+                  <Input
+                    name="fullNameBangla"
+                    required
+                    placeholder="মোহাম্মদ আলী"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label>Full Name (English)</Label>
+                  <Input
+                    name="fullNameEnglish"
+                    required
+                    placeholder="Mohammad Ali"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label>Contact</Label>
+                <Input name="contact" required placeholder="Phone or Email" />
+              </div>
             </div>
 
-            <div>
-              <Label>Full Name (English)</Label>
-              <Input name="fullNameEnglish" required />
+            {/* Divider */}
+            <div className="border-t"></div>
+
+            {/* SECTION — Account Settings */}
+            <div className="space-y-4 w-full ">
+              <h4 className="text-sm font-semibold text-gray-700 tracking-wide">
+                Account Settings
+              </h4>
+
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+                {/* Contact Type */}
+                <div className="space-y-1 w-full">
+                  <Label>Contact Type</Label>
+                  <Select onValueChange={setContactType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent className="w-full">
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Role */}
+                <div className="space-y-1 w-full ">
+                  <Label>User Role</Label>
+                  <Select onValueChange={setRole}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="volunteer">Volunteer</SelectItem>
+                      <SelectItem value="representative">
+                        Representative
+                      </SelectItem>
+                      <SelectItem value="recognition">Recognition</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Profile Image */}
+              <div className="space-y-1">
+                <Label>Profile Image (Optional)</Label>
+                <Input type="file" name="profileImage" />
+              </div>
             </div>
 
-            <div>
-              <Label>Contact</Label>
-              <Input name="contact" required />
-            </div>
-
-            <div>
-              <Label>Contact Type</Label>
-              <Select onValueChange={setContactType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="phone">Phone</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Role</Label>
-              <Select onValueChange={setRole}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="volunteer">Volunteer</SelectItem>
-                  <SelectItem value="representative">Representative</SelectItem>
-                  <SelectItem value="recognition">Recognition</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Profile Image</Label>
-              <Input type="file" name="profileImage" />
-            </div>
-
-            <DialogFooter>
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? "Creating..." : "Create User"}
+            {/* Submit Button */}
+            <DialogFooter className="pt-4">
+              <Button
+                type="submit"
+                disabled={submitDisabled}
+                className="w-full bg-[#F06122] hover:bg-[#d9551c] text-white py-2.5 text-base font-medium rounded-lg"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating User...
+                  </div>
+                ) : (
+                  "Create User"
+                )}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* SUCCESS + ERROR MODAL */}
+      {/* SUCCESS / ERROR MODAL */}
       <Dialog open={resultModalOpen} onOpenChange={setResultModalOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-xl shadow-lg">
           <DialogHeader>
             <DialogTitle
-              className={`${
+              className={`text-lg font-semibold ${
                 modalType === "success" ? "text-green-600" : "text-red-600"
               }`}
             >
-              {modalType === "success" ? "Success" : "Error"}
+              {modalType === "success" ? "User Created Successfully" : "Error"}
             </DialogTitle>
           </DialogHeader>
 
-          <p className="text-gray-700 text-sm">{modalMessage}</p>
+          <p className="text-gray-700 text-sm py-3">{modalMessage}</p>
 
           <DialogFooter>
-            <Button onClick={() => setResultModalOpen(false)}>OK</Button>
+            <Button
+              onClick={() => setResultModalOpen(false)}
+              className="bg-gray-900 hover:bg-gray-700 text-white rounded-md"
+            >
+              OK
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
