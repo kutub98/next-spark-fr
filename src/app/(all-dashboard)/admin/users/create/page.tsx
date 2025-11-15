@@ -91,7 +91,7 @@ export default function CreateUserWithModal() {
         </DialogTrigger>
 
         {/* Form Modal */}
-        <DialogContent className="max-w-lg rounded-xl shadow-xl overflow-y-scroll">
+        <DialogContent className=" max-h-[90vh] overflow-y-auto rounded-xl shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-2xl text-start font-semibold text-gray-800">
               Create New User

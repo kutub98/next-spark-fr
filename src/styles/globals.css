@@ -26,6 +26,25 @@ body {
   scrollbar-width: none; /* Firefox */
 }
 
+/* Hide scrollbar globally */
+
+* {
+  scrollbar-width: none !important; /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  width: 0 !important; /* Chrome, Safari */
+  height: 0 !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: transparent !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
