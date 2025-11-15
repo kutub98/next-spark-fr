@@ -757,7 +757,7 @@ export default function ParticipateQuiz({
               </Button>
             </div>
           ) : !quizStarted ? (
-            <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+            <div className="flex-1 overflow-y-scroll flex flex-col items-center justify-center space-y-6">
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-bold">Quiz Instructions</h2>
                 <p className="text-gray-600">
