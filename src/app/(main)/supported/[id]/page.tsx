@@ -1,139 +1,77 @@
-// "use client";
-
-// import Image from "next/image";
-// import { useParams } from "next/navigation";
-// import Link from "next/link";
-
-// // Example sponsor data
-// const sponsorData = [
-//   {
-//     id: 1,
-//     name: "MA Foundation",
-//     image: "/MA.png",
-//     description:
-//       "MA Foundation শিক্ষার্থীদের শিক্ষা ও দক্ষতা বৃদ্ধিতে সহায়তা করে। NEXT SPARK প্ল্যাটফর্মকে আরও সমৃদ্ধ করতে তাদের অবদান গুরুত্বপূর্ণ।",
-//     contributions: [
-//       "শিক্ষার্থীদের প্রযুক্তি সহায়তা",
-//       "কনটেন্ট ডেভেলপমেন্টে সহযোগিতা",
-//       "মাসিক পুরস্কার স্পন্সরশিপ",
-//     ],
-//     website: "https://example.com",
-//   },
-//   {
-//     id: 2,
-//     name: "SOHA Group",
-//     image: "/soha-2.png",
-//     description:
-//       "SOHA Group বাংলাদেশের শীর্ষ শিক্ষা ও প্রযুক্তি সহায়ক প্রতিষ্ঠান। NEXT SPARK এ তাদের অংশীদারিত্ব শিক্ষার মান বৃদ্ধি করেছে।",
-//     contributions: [
-//       "কুইজ সফটওয়্যার সাপোর্ট",
-//       "ইভেন্ট স্পন্সরশিপ",
-//       "ডিজাইন ও ব্র্যান্ডিং সহযোগিতা",
-//     ],
-//     website: "https://example.com",
-//   },
-// ];
-
-// export default function SponsoredDetailsPage() {
-//   const { id } = useParams();
-//   const sponsor = sponsorData.find((item) => item.id === Number(id));
-
-//   if (!sponsor) {
-//     return (
-//       <div className="container mx-auto py-20 text-center">
-//         <h2 className="text-2xl font-bold text-red-500">Sponsor Not Found</h2>
-//         <Link href="/" className="text-blue-600 underline mt-4 inline-block">
-//           Go Back Home
-//         </Link>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="container mx-auto px-4 py-16 max-w-4xl">
-//       {/* Sponsor Header */}
-//       <div className="flex flex-col gap-6 border-b pb-6 mb-8">
-//         <Image
-//           src={sponsor.image}
-//           alt={sponsor.name}
-//           width={150}
-//           height={80}
-//           className="object-contain"
-//         />
-//         <div>
-//           <h1 className="text-2xl font-bold text-gray-800">{sponsor.name}</h1>
-//           <p className="text-gray-600 mt-2">{sponsor.description}</p>
-//         </div>
-//       </div>
-
-//       {/* Contributions Section */}
-//       <div className="mb-8">
-//         <h2 className="text-xl font-semibold text-gray-800 mb-4">
-//           স্পন্সরের অবদান
-//         </h2>
-//         <ul className="list-disc list-inside text-gray-700 space-y-2">
-//           {sponsor.contributions.map((point, idx) => (
-//             <li key={idx}>{point}</li>
-//           ))}
-//         </ul>
-//       </div>
-
-//       {/* Website & CTA */}
-//       <div className="flex flex-col md:flex-row items-center gap-4 mb-12">
-//         <a
-//           href={sponsor.website}
-//           target="_blank"
-//           className="px-6 py-2 bg-[color:var(--brand-primary)] text-white rounded-md hover:opacity-90 transition text-center"
-//         >
-//           Visit Website
-//         </a>
-//         <Link
-//           href="/"
-//           className="text-gray-600 hover:text-[color:var(--brand-primary)]"
-//         >
-//           ← Back to Home
-//         </Link>
-//       </div>
-//     </div>
-//   );
-// }
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 
+// Common contributions
+const commonContributions = [
+  "Technical support sponsorship for the Next Spark Quiz Platform",
+  "Financial assistance for platform development",
+  "Commitment to advancing digital learning",
+  "Empowering the next generation with technical knowledge",
+];
+
+// Sponsors list
 const sponsorData = [
   {
-    id: 1,
-    name: "MA Foundation",
-    image: "/MA.png",
-    tagline: "Empowering Education for the Next Generation",
-    description:
-      "MA Foundation শিক্ষার্থীদের শিক্ষা ও দক্ষতা বৃদ্ধিতে সহায়তা করে। NEXT SPARK প্ল্যাটফর্মকে আরও সমৃদ্ধ করতে তাদের অবদান অত্যন্ত গুরুত্বপূর্ণ।",
-    contributions: [
-      "শিক্ষার্থীদের প্রযুক্তি সহায়তা",
-      "কনটেন্ট ডেভেলপমেন্টে সহযোগিতা",
-      "মাসিক পুরস্কার স্পন্সরশিপ",
-    ],
-    website: "https://example.com",
+    id: 2,
+    name: "Suha Tex",
+    company: "Suha Tex",
+    founder: "Mr. Harunur Rashid",
+    image: "/soha-2.png",
+    tagline: "Ensuring Global-Standard Garments With Technical Excellence",
+    contributions: commonContributions,
+    website: "https://example.com/suha-tex",
   },
   {
-    id: 2,
-    name: "SOHA Group",
-    image: "/soha-2.png",
-    tagline: "Leading Innovation for Bangladesh",
-    description:
-      "SOHA Group বাংলাদেশের শীর্ষ শিক্ষা ও প্রযুক্তি সহায়ক প্রতিষ্ঠান। NEXT SPARK এর সাথে তাদের অংশীদারিত্ব শিক্ষার মান বৃদ্ধি করেছে।",
-    contributions: [
-      "কুইজ সফটওয়্যার সাপোর্ট",
-      "ইভেন্ট স্পন্সরশিপ",
-      "ডিজাইন ও ব্র্যান্ডিং সহযোগিতা",
-    ],
-    website: "https://example.com",
+    id: 1,
+    name: "Am Tex",
+    company: "Am Tex",
+    founder: "Mr. Harunur Rashid",
+    image: "/MA.png",
+    tagline: "Ensuring Global-Standard Garments With Technical Excellence",
+    contributions: commonContributions,
+    website: "https://example.com/am-tex",
   },
 ];
+
+// Function to generate dynamic description
+const getSponsorDescription = (sponsor: any) => (
+  <>
+    <p>
+      <span className="font-semibold">{sponsor.company}</span> is a prominent
+      name in the Ready-Made Garment (RMG) export industry, founded and led by{" "}
+      <span className="font-semibold">{sponsor.founder}</span>. With extensive
+      experience in the apparel sector dating back to 2008, {sponsor.founder}{" "}
+      has built the company on a commitment to quality, global standards, and
+      ethical manufacturing practices.
+    </p>
+
+    <br />
+
+    <p>
+      We specialize in exporting high-quality garments to international markets,
+      where technical precision and efficiency are paramount.
+    </p>
+
+    <br />
+
+    <p>
+      As a company that values technical advancement, we are proud to be the
+      Technical Support Sponsor for the{" "}
+      <span className="text-primary font-semibold">
+        Next Spark Quiz Platform
+      </span>
+      . This sponsorship represents our strong commitment to investing in
+      technology and fostering digital excellence. We provide the necessary
+      financial support for the {"platform's"} construction, helping to create a
+      valuable resource for knowledge and skill development. Our goal is to
+      empower the next generation and contribute to a more technically adept
+      future.
+    </p>
+  </>
+);
 
 export default function SponsoredDetailsPage() {
   const { id } = useParams();
@@ -151,54 +89,67 @@ export default function SponsoredDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-16 max-w-5xl">
-      {/* ---------- Header ---------- */}
-      <div className="flex flex-col md:flex-row items-start gap-4 mb-12">
-        {/* Logo */}
-        <div className="flex-shrink-0 ">
+    <div className="container mx-auto px-4 py-16 max-w-4xl">
+      {/* HEADER CARD */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-10 mb-12">
+        <div className="flex flex-col items-start gap-6">
+          {/* Sponsor Logo */}
           <Image
             src={sponsor.image}
             alt={sponsor.name}
-            width={200}
-            height={100}
-            className="object-contain"
+            width={220}
+            height={120}
+            className="object-contain drop-shadow-sm"
           />
+
+          {/* Sponsor Info */}
+          <div className="flex-1">
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+              {sponsor.name}
+            </h1>
+            <p className="text-lg text-gray-600 mt-1">
+              Company: <span className="font-semibold">{sponsor.company}</span>
+            </p>
+            <p className="text-lg text-gray-600 mt-1">
+              Founder: <span className="font-semibold">{sponsor.founder}</span>
+            </p>
+            <p className="text-lg text-gray-500 mt-2 italic">
+              {sponsor.tagline}
+            </p>
+          </div>
         </div>
 
-        {/* Sponsor Info */}
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-800">{sponsor.name}</h1>
-          <p className="text-gray-500 mt-2 italic">{sponsor.tagline}</p>
-          <p className="text-gray-700 mt-4 leading-relaxed">
-            {sponsor.description}
-          </p>
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-8"></div>
+
+        <div className="text-gray-700 text-lg leading-relaxed space-y-4">
+          {getSponsorDescription(sponsor)}
         </div>
       </div>
 
-      {/* ---------- Contributions ---------- */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-12 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      {/* CONTRIBUTIONS SECTION */}
+      <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-xl p-8 shadow-md">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
           এই স্পন্সরের অবদান
         </h2>
-        <ul className="list-disc list-inside text-gray-700 space-y-2">
+
+        <ul className="space-y-3">
           {sponsor.contributions.map((point, idx) => (
-            <li key={idx}>{point}</li>
+            <li
+              key={idx}
+              className="flex items-start gap-3 text-gray-700 text-lg"
+            >
+              <span className="w-3 h-3 mt-2 rounded-full bg-[color:var(--brand-primary)]"></span>
+              <span>{point}</span>
+            </li>
           ))}
         </ul>
       </div>
 
-      {/* ---------- CTA / Website ---------- */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <a
-          href={sponsor.website}
-          target="_blank"
-          className="px-6 py-3 bg-[color:var(--brand-primary)] text-white rounded-md hover:opacity-90 shadow-md transition text-center"
-        >
-          Visit Official Website
-        </a>
+      {/* CTA BUTTON */}
+      <div className="flex justify-center mt-12 gap-4 flex-wrap">
         <Link
           href="/"
-          className="text-gray-600 hover:text-[color:var(--brand-primary)]"
+          className="px-6 py-3 bg-gray-800 text-white rounded-lg shadow-md hover:bg-gray-700 transition"
         >
           ← Back to Home
         </Link>
