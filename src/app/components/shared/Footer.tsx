@@ -12,6 +12,11 @@ export default function Footer() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
 
+  const sponsordeBy = [
+    { id: 1, image: "/MA.png", about: "" },
+    { id: 2, image: "/soha-2.png", about: "" },
+  ];
+
   return (
     <footer className="border-t border-gray-200 bg-white">
       <div className="container mx-auto px-4 py-12">
@@ -32,6 +37,22 @@ export default function Footer() {
               শিক্ষার্থীদের জন্য একটি ইন্টারেক্টিভ কুইজ প্ল্যাটফর্ম। জ্ঞান
               পরীক্ষা করুন এবং পুরস্কার জিতুন।
             </p>
+            <div>
+              <h1>সহযোগিতায় : </h1>
+              <div className="grid grid-cols-3 gap-3 mt-2">
+                {sponsordeBy.map((item) => (
+                  <Link href={`/supported/${item.id}`} key={item.id}>
+                    <Image
+                      src={item.image}
+                      alt="Sponsor Logo"
+                      width={150}
+                      height={20}
+                      className="object-contain"
+                    />
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Quick Links */}
