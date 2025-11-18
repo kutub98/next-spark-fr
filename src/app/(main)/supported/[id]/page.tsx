@@ -132,7 +132,7 @@ export default function SponsoredDetailsPage() {
           এই স্পন্সরের অবদান
         </h2>
 
-        <ul className="space-y-3">
+        <ul className="space-y-2">
           {sponsor.contributions.map((point, idx) => (
             <li
               key={idx}
