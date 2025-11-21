@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import { AppDispatch } from "@/store/store";
 import { getQuizzes } from "@/redux/features/quizSlice";
@@ -28,11 +28,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trophy, Download, Loader2 } from "lucide-react";
+import { Trophy, Download, Loader2, Award, Handshake } from "lucide-react";
 import CertificateModal from "../_components/certificateModal";
 import jsPDF from "jspdf";
+import { getAllUsers } from "@/redux/features/usersSlice";
 
-// ✅ Helper: Export leaderboard to CSV
+// CSV Export
 const exportToCSV = (data: any[], filename = "leaderboard.csv") => {
   if (!data.length) return;
 
@@ -61,26 +62,42 @@ const exportToCSV = (data: any[], filename = "leaderboard.csv") => {
 
 const LeaderBoard = () => {
   const dispatch = useDispatch<AppDispatch>();
+
   const [quiz, setQuiz] = useState<any[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
-  const [selectedQuizId, setSelectedQuizId] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [certificate, setCertificate] = useState<any[]>([]);
+  const [selectedQuizId, setSelectedQuizId] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const { users } = useSelector((state: any) => state.users);
+  const [recognitionUsers, setRecognitionUsers] = useState<any[]>([]);
+  const [volunteerUsers, setVolunteerUsers] = useState<any[]>([]);
+  // --- Certificate Modal State ---
   const [openCertificateModal, setOpenCertificateModal] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState<any>(null);
-  const [certificate, setCertificate] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [certificateType, setCertificateType] = useState<
+    "quiz" | "recognition" | "volunteer"
+  >("quiz");
 
-  // 🆕 loading states for downloads
+  // download loader
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadType, setDownloadType] = useState<"image" | "pdf" | null>(
     null
   );
 
-  const handleCertificateClick = (entry: any) => {
-    setSelectedParticipant(entry);
-    setOpenCertificateModal(true);
-  };
+  useEffect(() => {
+    dispatch(getAllUsers());
+  }, [dispatch]);
 
-  // ✅ Fetch certificates
+  // ---- Filter users by role ----
+  useEffect(() => {
+    if (users?.length > 0) {
+      setRecognitionUsers(users.filter((u: any) => u.role === "recognition"));
+      setVolunteerUsers(users.filter((u: any) => u.role === "volunteer"));
+    }
+  }, [users]);
+
+  // --- Fetch Certificate Records ---
   const fetchCertificate = async () => {
     try {
       const response = await fetch(`${api}/certificates`);
@@ -101,7 +118,7 @@ const LeaderBoard = () => {
     fetchCertificate();
   }, []);
 
-  // ✅ Fetch quizzes
+  // --- Fetch quizzes & participations ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -115,10 +132,11 @@ const LeaderBoard = () => {
     fetchData();
   }, [dispatch]);
 
-  // ✅ Fetch leaderboard for selected quiz
+  // --- Fetch leaderboard per quiz ---
   useEffect(() => {
     const fetchLeaderboard = async () => {
       if (!selectedQuizId) return;
+
       try {
         const response = await fetch(
           `${api}/participations/quiz/${selectedQuizId}/leaderboard`
@@ -129,20 +147,47 @@ const LeaderBoard = () => {
         console.error("Error fetching leaderboard:", error);
       }
     };
+
     fetchLeaderboard();
   }, [selectedQuizId]);
 
-  // ✅ Quiz change
+  // --- On quiz change ---
   const handleQuizChange = (quizId: string) => setSelectedQuizId(quizId);
 
-  // ✅ Filter leaderboard by name
+  // --- Filter leaderboard ---
   const filteredLeaderboard = leaderboard.filter((entry) =>
     entry.user?.fullNameEnglish
       ?.toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
 
-  // 🆕 Download Image
+  // --- Quiz Certificate Generation ---
+  const handleCertificateClick = (entry: any) => {
+    setCertificateType("quiz");
+    setSelectedParticipant(entry);
+    setOpenCertificateModal(true);
+  };
+
+  // --- Recognition/Volunteer Certificate Generation ---
+  const handleGenerateUserCertificate = (
+    user: any,
+    type: "recognition" | "volunteer"
+  ) => {
+    const quizName =
+      quiz.find((q: any) => q._id === selectedQuizId)?.title || "";
+    const quizId = quiz.find((q: any) => q._id === selectedQuizId)?._id || "id";
+    setCertificateType(type);
+    setSelectedParticipant(null); // no participation required
+    setSelectedUser({
+      user,
+      quizName,
+      quizId,
+    });
+
+    setOpenCertificateModal(true);
+  };
+
+  // --- Image Download ---
   const handleDownloadImage = async (
     url: string,
     filename: string,
@@ -150,6 +195,7 @@ const LeaderBoard = () => {
   ) => {
     setDownloadingId(id);
     setDownloadType("image");
+
     try {
       const link = document.createElement("a");
       link.href = url;
@@ -163,7 +209,7 @@ const LeaderBoard = () => {
     }
   };
 
-  // 🆕 Download PDF
+  // --- PDF Download ---
   const handleDownloadPDF = async (
     url: string,
     filename: string,
@@ -171,16 +217,20 @@ const LeaderBoard = () => {
   ) => {
     setDownloadingId(id);
     setDownloadType("pdf");
+
     try {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.src = url;
+
       img.onload = () => {
         const pdf = new jsPDF("l", "mm", "a4");
         const width = pdf.internal.pageSize.getWidth();
         const height = (img.height * width) / img.width;
+
         pdf.addImage(img, "PNG", 0, 0, width, height);
         pdf.save(`${filename}.pdf`);
+
         setDownloadingId(null);
         setDownloadType(null);
       };
@@ -234,7 +284,7 @@ const LeaderBoard = () => {
           </div>
         </motion.div>
 
-        {/* Search Input */}
+        {/* Search */}
         {selectedQuizId && leaderboard.length > 0 && (
           <div className="flex justify-end">
             <Input
@@ -247,7 +297,7 @@ const LeaderBoard = () => {
           </div>
         )}
 
-        {/* Table */}
+        {/* LeaderBoard Table */}
         <Card className="shadow-xl py-4 backdrop-blur-md bg-white/80 border border-gray-100">
           <CardHeader>
             <CardTitle className="text-xl sm:text-2xl font-semibold text-indigo-700">
@@ -284,17 +334,12 @@ const LeaderBoard = () => {
                           : index === 2
                           ? "🥉"
                           : `#${index + 1}`;
-                      const passed = entry.obtainedMarks >= entry.totalMarks;
 
-                      // Find matching certificate
-                      const matchedCert = Array.isArray(certificate)
-                        ? certificate.find((cert: any) => {
-                            const certParticipationId =
-                              cert.participation?._id?.toString();
-                            const entryId = entry?._id?.toString();
-                            return certParticipationId === entryId;
-                          })
-                        : null;
+                      const matchedCert = certificate.find(
+                        (cert: any) =>
+                          cert.participation?._id?.toString() ===
+                          entry?._id?.toString()
+                      );
 
                       const isDownloading = downloadingId === entry._id;
 
@@ -321,14 +366,22 @@ const LeaderBoard = () => {
                             %
                           </TableCell>
                           <TableCell>
-                            <Badge variant={passed ? "default" : "destructive"}>
-                              {passed ? "Passed" : "Failed"}
+                            <Badge
+                              variant={
+                                entry.obtainedMarks >= entry.totalMarks
+                                  ? "default"
+                                  : "destructive"
+                              }
+                            >
+                              {entry.obtainedMarks >= entry.totalMarks
+                                ? "Passed"
+                                : "Failed"}
                             </Badge>
                           </TableCell>
 
                           <TableCell className="flex items-center gap-2">
                             {matchedCert ? (
-                              <div className="flex gap-2">
+                              <>
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -370,14 +423,14 @@ const LeaderBoard = () => {
                                   )}
                                   PDF
                                 </Button>
-                              </div>
+                              </>
                             ) : (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleCertificateClick(entry)}
                               >
-                                Generate Certificate
+                                Generate
                               </Button>
                             )}
                           </TableCell>
@@ -397,13 +450,221 @@ const LeaderBoard = () => {
           </CardContent>
         </Card>
 
+        {/* Recognition Users */}
+        {selectedQuizId && (
+          <Card className="shadow-lg border-purple-200">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2 text-purple-700">
+                <Award className="w-6 h-6" />
+                Recognition Certificates (
+                {quiz.find((q) => q._id === selectedQuizId)?.title})
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {recognitionUsers.map((user) => {
+                    const matchedCert = certificate.find(
+                      (cert: any) =>
+                        cert.user?._id?.toString() === user._id.toString() &&
+                        cert.eventId?.toString() === selectedQuizId
+                    );
+
+                    const isDownloading = downloadingId === user._id;
+
+                    return (
+                      <TableRow key={user._id}>
+                        <TableCell>{user.fullNameEnglish}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+
+                        <TableCell>
+                          {matchedCert ? (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isDownloading}
+                                onClick={() =>
+                                  handleDownloadImage(
+                                    matchedCert.imageUrl,
+                                    user.fullNameEnglish,
+                                    user._id
+                                  )
+                                }
+                              >
+                                {isDownloading && downloadType === "image" ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Download className="w-4 h-4 mr-1" />
+                                )}
+                                Image
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                className="bg-indigo-600 text-white hover:bg-indigo-700"
+                                disabled={isDownloading}
+                                onClick={() =>
+                                  handleDownloadPDF(
+                                    matchedCert.imageUrl,
+                                    user.fullNameEnglish,
+                                    user._id
+                                  )
+                                }
+                              >
+                                {isDownloading && downloadType === "pdf" ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Download className="w-4 h-4 mr-1" />
+                                )}
+                                PDF
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() =>
+                                handleGenerateUserCertificate(
+                                  user,
+                                  "recognition"
+                                )
+                              }
+                            >
+                              Generate Certificate
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Volunteer Users */}
+        {selectedQuizId && (
+          <Card className="shadow-lg border-blue-200">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2 text-blue-700">
+                <Handshake className="w-6 h-6" />
+                Volunteer Certificates (
+                {quiz.find((q) => q._id === selectedQuizId)?.title})
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {volunteerUsers.map((user) => {
+                    const matchedCert = certificate.find(
+                      (cert: any) =>
+                        cert.user?._id?.toString() === user._id.toString() &&
+                        cert.eventId?.toString() === selectedQuizId
+                    );
+
+                    const isDownloading = downloadingId === user._id;
+
+                    return (
+                      <TableRow key={user._id}>
+                        <TableCell>{user.fullNameEnglish}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+
+                        <TableCell>
+                          {matchedCert ? (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={isDownloading}
+                                onClick={() =>
+                                  handleDownloadImage(
+                                    matchedCert.imageUrl,
+                                    user.fullNameEnglish,
+                                    user._id
+                                  )
+                                }
+                              >
+                                {isDownloading && downloadType === "image" ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Download className="w-4 h-4 mr-1" />
+                                )}
+                                Image
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                className="bg-blue-600 text-white hover:bg-blue-700"
+                                disabled={isDownloading}
+                                onClick={() =>
+                                  handleDownloadPDF(
+                                    matchedCert.imageUrl,
+                                    user.fullNameEnglish,
+                                    user._id
+                                  )
+                                }
+                              >
+                                {isDownloading && downloadType === "pdf" ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Download className="w-4 h-4 mr-1" />
+                                )}
+                                PDF
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() =>
+                                handleGenerateUserCertificate(user, "volunteer")
+                              }
+                            >
+                              Generate Certificate
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Certificate Modal */}
         <CertificateModal
           open={openCertificateModal}
           onOpenChange={(open: any) => {
             setOpenCertificateModal(open);
-            if (!open) fetchCertificate(); // ✅ refresh after certificate generation
+            if (!open) fetchCertificate();
           }}
           participant={selectedParticipant}
+          user={selectedUser?.user}
+          quizName={selectedUser?.quizName}
+          quizId={selectedUser?.quizId}
+          type={certificateType}
         />
       </div>
     </div>

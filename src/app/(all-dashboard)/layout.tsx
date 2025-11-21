@@ -132,20 +132,53 @@ export default function DashboardLayout({
   }, [dispatch]);
 
   // Redirect unauthorized users
+  // useEffect(() => {
+  //   if (isCheckingAuth) return;
+  //   if (!isAuthenticated || !user) {
+  //     router.replace("/auth");
+  //     return;
+  //   }
+  //   const isAdminPath = pathname.startsWith("/admin");
+  //   const isStudentPath = pathname.startsWith("/student");
+  //   if (isAdminPath && user.role !== "admin") {
+  //     toast.error("Admin access required");
+  //     router.replace("/student/dashboard");
+  //   } else if (
+  //     (isStudentPath && user.role !== "student") ||
+  //     "recognition" ||
+  //     "volunteer"
+  //   ) {
+  //     toast.error("Student access required");
+  //     router.replace("/admin/dashboard");
+  //   }
+  // }, [pathname, user, isAuthenticated, isCheckingAuth, router]);
+
   useEffect(() => {
     if (isCheckingAuth) return;
+
     if (!isAuthenticated || !user) {
       router.replace("/auth");
       return;
     }
+
     const isAdminPath = pathname.startsWith("/admin");
     const isStudentPath = pathname.startsWith("/student");
+
+    // Admin access restriction
     if (isAdminPath && user.role !== "admin") {
       toast.error("Admin access required");
       router.replace("/student/dashboard");
-    } else if (isStudentPath && user.role !== "student") {
-      toast.error("Student access required");
-      router.replace("/admin/dashboard");
+      return;
+    }
+
+    // Student path access (allow multiple roles)
+    if (isStudentPath) {
+      const allowed = ["student", "volunteer", "recognition", "representative"];
+
+      if (!allowed.includes(user.role)) {
+        toast.error("Student access required");
+        router.replace("/admin/dashboard");
+      }
     }
   }, [pathname, user, isAuthenticated, isCheckingAuth, router]);
 
@@ -174,8 +207,15 @@ export default function DashboardLayout({
 
   if (!isAuthenticated || !user) return null;
 
-  const userRole = user.role?.toLowerCase() || "student";
-  const items = sidebarItems[userRole as keyof typeof sidebarItems] || [];
+  // const userRole =
+  //   user.role?.toLowerCase() || "student" || "recognition" || "volunteer";
+  // const items = sidebarItems[userRole as keyof typeof sidebarItems] || [];
+
+  const rawRole = user.role?.toLowerCase();
+
+  const userRole = rawRole === "admin" ? "admin" : "student"; // everyone other than admin gets student sidebar
+
+  const items = sidebarItems[userRole] || [];
 
   return (
     <div className="flex h-screen bg-gray-50">

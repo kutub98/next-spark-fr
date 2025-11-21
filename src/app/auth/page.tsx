@@ -117,7 +117,14 @@ export default function AuthPage() {
           loginUser({ contact, password })
         ).unwrap();
 
-        if (result.user.role !== "student") {
+        const allowedRoles = [
+          "student",
+          "volunteer",
+          "recognition",
+          "representative",
+        ];
+
+        if (!allowedRoles.includes(result.user.role)) {
           toast.error("শুধুমাত্র শিক্ষার্থী অ্যাকাউন্ট দিয়ে লগইন করা যাবে");
           await dispatch(logoutUser());
           return;
